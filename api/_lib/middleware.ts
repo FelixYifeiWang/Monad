@@ -30,6 +30,8 @@ export function configurePassport() {
     ? `https://${process.env.VERCEL_URL}`
     : 'http://localhost:5000';
 
+  console.log('🔧 Passport callback URL:', `${baseUrl}/api/auth/google/callback`);
+
   passport.use(
     new GoogleStrategy(
       {
@@ -43,6 +45,8 @@ export function configurePassport() {
           if (!email) {
             return done(new Error('No email found in Google profile'));
           }
+
+          console.log('✅ Google OAuth successful:', email);
 
           await storage.upsertUser({
             id: profile.id,
@@ -60,6 +64,7 @@ export function configurePassport() {
             profileImageUrl: profile.photos?.[0]?.value,
           });
         } catch (error) {
+          console.error('❌ OAuth error:', error);
           done(error as Error);
         }
       }
@@ -67,14 +72,22 @@ export function configurePassport() {
   );
 
   passport.serializeUser((user: any, done) => {
+    console.log('📦 Serializing user:', user.id);
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: string, done) => {
     try {
+      console.log('📂 Deserializing user:', id);
       const user = await storage.getUser(id);
-      done(null, user || false);
+      if (!user) {
+        console.error('❌ User not found:', id);
+        return done(null, false);
+      }
+      console.log('✅ User deserialized:', user.email);
+      done(null, user);
     } catch (error) {
+      console.error('❌ Deserialization error:', error);
       done(null, false);
     }
   });
@@ -95,17 +108,25 @@ export function getSessionMiddleware() {
       ttl: sessionTtl,
       tableName: 'sessions',
     });
+    console.log('✅ Using PostgreSQL session store');
+  } else {
+    console.warn('⚠️  No DATABASE_URL - sessions will not persist!');
   }
+
+  const isProduction = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
 
   return session({
     secret: process.env.SESSION_SECRET!,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    proxy: true, // ✅ CRITICAL for Vercel
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'lax', // ✅ 'none' required for secure cookies across domains
       maxAge: sessionTtl,
+      path: '/',
     },
   });
 }
@@ -123,6 +144,7 @@ export function runMiddleware(req: VercelRequest, res: VercelResponse, fn: Funct
 }
 
 // Initialize session and passport for a route
+// Initialize session and passport for a route
 export async function initAuth(req: VercelRequest, res: VercelResponse) {
   configurePassport();
   
@@ -130,6 +152,11 @@ export async function initAuth(req: VercelRequest, res: VercelResponse) {
   await runMiddleware(req, res, sessionMiddleware);
   await runMiddleware(req, res, passport.initialize());
   await runMiddleware(req, res, passport.session());
+  
+  // @ts-ignore - express-session adds session property
+  console.log('🔍 Session ID:', (req as any).session?.id);
+  // @ts-ignore
+  console.log('🔍 Session data:', (req as any).session?.passport);
 }
 
 // Middleware to require authentication
@@ -141,10 +168,12 @@ export function requireAuth(
 
     // @ts-ignore
     if (!req.isAuthenticated || !req.isAuthenticated()) {
+      console.log('❌ Authentication failed');
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    // @ts-ignore - Passport adds user to request
+    // @ts-ignore
+    console.log('✅ Authenticated as:', req.user?.email);
     return handler(req, res);
   };
 }

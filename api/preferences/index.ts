@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { requireAuth } from '../_lib/middleware.js';
 import { storage } from '../_lib/storage.js';
-import { insertInfluencerPreferencesSchema } from '../../shared/schema';
+import { insertInfluencerPreferencesSchema } from '../../shared/schema.js';
 import { fromError } from 'zod-validation-error';
 
 export default requireAuth(async (req: VercelRequest, res: VercelResponse) => {

@@ -79,18 +79,22 @@ export default function BusinessInquiry() {
 
   const submitMutation = useMutation({
     mutationFn: async (data: InquiryFormData) => {
-      const formData = new FormData();
-      formData.append("influencerId", data.influencerId);
-      formData.append("businessEmail", data.businessEmail);
-      formData.append("message", data.message);
-      if (data.price) formData.append("price", data.price.toString());
-      if (data.companyInfo) formData.append("companyInfo", data.companyInfo);
-      if (selectedFile) formData.append("attachment", selectedFile);
+      // ✅ Send as JSON instead of FormData
+      const payload = {
+        influencerId: data.influencerId,
+        businessEmail: data.businessEmail,
+        message: data.message,
+        price: data.price,
+        companyInfo: data.companyInfo,
+        // File uploads disabled for now - will add with Vercel Blob later
+      };
 
       const response = await fetch("/api/inquiries", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to submit inquiry");

@@ -13,6 +13,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { id } = req.query;
 
+    console.log('🔒 Closing chat for inquiry:', id);
+
     if (!id || typeof id !== 'string') {
       return res.status(400).json({ message: 'Inquiry ID is required' });
     }
@@ -23,8 +25,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(404).json({ message: 'Inquiry not found' });
     }
 
+    // ✅ Allow closing even if already closed (idempotent)
     if (!inquiry.chatActive) {
-      return res.status(400).json({ message: 'This conversation is already closed' });
+      console.log('⚠️ Chat already closed, returning existing inquiry');
+      return res.json(inquiry);
     }
 
     // Get conversation history
@@ -61,9 +65,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Close chat and save recommendation
     const updatedInquiry = await storage.closeInquiryChat(id, recommendation);
 
+    console.log('✅ Chat closed successfully');
     res.json(updatedInquiry);
-  } catch (error) {
-    console.error('Error closing chat:', error);
-    res.status(500).json({ message: 'Failed to close chat' });
+  } catch (error: any) {
+    console.error('❌ Error closing chat:', error);
+    res.status(500).json({ message: 'Failed to close chat', error: error.message });
   }
 }

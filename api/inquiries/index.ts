@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { requireAuth, initAuth } from '../_lib/middleware.js';
 import { storage } from '../_lib/storage.js';
 // ✅ CHANGE 1: Fix import path
-import { insertInquirySchema } from '../../shared/schema';
+import { insertInquirySchema } from '../../shared/schema.js';
 import { fromError } from 'zod-validation-error';
 import { generateInquiryResponse } from '../_lib/aiAgent.js';
 

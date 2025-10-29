@@ -5,9 +5,11 @@ function getResendClient() {
   const apiKey = process.env.RESEND_API_KEY;
   
   if (!apiKey) {
+    console.error('❌ RESEND_API_KEY not found in environment variables');
     throw new Error('RESEND_API_KEY not found in environment variables');
   }
   
+  console.log('✅ Resend API key found:', apiKey.substring(0, 10) + '...');
   return new Resend(apiKey);
 }
 
@@ -17,12 +19,13 @@ export async function sendInquiryStatusEmail(
   status: 'approved' | 'rejected' | 'needs_info',
   additionalInfo?: string
 ) {
+  console.log('📧 sendInquiryStatusEmail called with:', { businessEmail, influencerName, status });
+  
   try {
     const client = getResendClient();
     
-    // Use a default "from" email - you'll need to verify this domain in Resend
-    // For now, we'll use the one from your env or a default
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@yourdomain.com';
+    // ✅ Use Resend's testing email
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
     let subject = '';
     let htmlContent = '';
@@ -69,7 +72,8 @@ export async function sendInquiryStatusEmail(
         break;
     }
 
-    console.log(`📧 Attempting to send email from: ${fromEmail} to: ${businessEmail}`);
+    console.log(`📧 Sending email from: ${fromEmail} to: ${businessEmail}`);
+    console.log(`📧 Subject: ${subject}`);
     
     const result = await client.emails.send({
       from: fromEmail,
@@ -78,13 +82,23 @@ export async function sendInquiryStatusEmail(
       html: htmlContent,
     });
 
-    console.log(`✅ Email sent successfully to ${businessEmail} for status: ${status}`, result);
+    console.log(`✅ Email sent successfully!`, result);
+    return result;
   } catch (error: any) {
     console.error('❌ Error sending email:', error);
-    console.error('Error details:', error?.message || error);
+    console.error('❌ Error name:', error?.name);
+    console.error('❌ Error message:', error?.message);
+    console.error('❌ Error stack:', error?.stack);
+    
     if (error?.response) {
-      console.error('Response error:', error.response);
+      console.error('❌ API Response:', error.response);
     }
-    // Don't throw - we don't want email failures to break the status update
+    
+    if (error?.statusCode) {
+      console.error('❌ Status code:', error.statusCode);
+    }
+    
+    // Re-throw so we can see it in logs
+    throw error;
   }
 }

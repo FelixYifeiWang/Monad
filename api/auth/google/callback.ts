@@ -9,7 +9,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   await initAuth(req, res);
 
-  // Use a promise wrapper for passport authenticate
   return new Promise((resolve, reject) => {
     passport.authenticate('google', (err: any, user: any, info: any) => {
       if (err) {
@@ -29,9 +28,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.redirect('/login?error=login_failed');
         }
 
-        // Success - redirect to dashboard
-        res.redirect('/dashboard');
-        resolve(undefined);
+        // ✅ CRITICAL: Save session before redirect
+        // @ts-ignore
+        req.session.save((saveErr: any) => {
+          if (saveErr) {
+            console.error('Session save error:', saveErr);
+            return res.redirect('/login?error=session_failed');
+          }
+
+          console.log('✅ Session saved successfully');
+          // Redirect to home after session is saved
+          res.redirect('/');
+          resolve(undefined);
+        });
       });
     })(req, res);
   });

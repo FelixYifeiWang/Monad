@@ -42,7 +42,7 @@ export type User = typeof users.$inferSelect;
 // Influencer preferences/instructions
 export const influencerPreferences = pgTable("influencer_preferences", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }), // ✅ Added .unique()
   personalContentPreferences: text("personal_content_preferences").notNull(),
   monetaryBaseline: integer("monetary_baseline").notNull(),
   contentLength: varchar("content_length").notNull(),
