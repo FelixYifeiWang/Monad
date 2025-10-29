@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { initAuth } from '../../../_lib/middleware';
-import { storage } from '../../../_lib/storage';
-import { generateChatResponse } from '../../../_lib/aiAgent';
+import { initAuth } from '../../../_lib/middleware.js';
+import { storage } from '../../../_lib/storage.js';
+import { generateChatResponse } from '../../../_lib/aiAgent.js';
 
 async function handleGet(req: VercelRequest, res: VercelResponse) {
   try {

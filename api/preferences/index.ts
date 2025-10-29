@@ -1,13 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireAuth } from '../_lib/middleware';
-import { storage } from '../_lib/storage';
-import { insertInfluencerPreferencesSchema } from '@shared/schema';
+import { requireAuth } from '../_lib/middleware.js';
+import { storage } from '../_lib/storage.js';
+import { insertInfluencerPreferencesSchema } from '../../shared/schema';
 import { fromError } from 'zod-validation-error';
 
-export default requireAuth(async (req, res) => {
+export default requireAuth(async (req: VercelRequest, res: VercelResponse) => {
+  // @ts-ignore - user is added by requireAuth middleware
+  const userId = req.user.id;
+
   if (req.method === 'GET') {
     try {
-      const userId = req.user.id;
       const prefs = await storage.getInfluencerPreferences(userId);
       res.json(prefs);
     } catch (error) {
@@ -16,7 +18,6 @@ export default requireAuth(async (req, res) => {
     }
   } else if (req.method === 'POST') {
     try {
-      const userId = req.user.id;
       const validation = insertInfluencerPreferencesSchema.safeParse({
         ...req.body,
         userId,

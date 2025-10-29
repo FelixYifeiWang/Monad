@@ -1,12 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireAuth, initAuth } from '../_lib/middleware';
-import { storage } from '../_lib/storage';
-import { insertInquirySchema } from '@shared/schema';
+import { requireAuth, initAuth } from '../_lib/middleware.js';
+import { storage } from '../_lib/storage.js';
+// ✅ CHANGE 1: Fix import path
+import { insertInquirySchema } from '../../shared/schema';
 import { fromError } from 'zod-validation-error';
-import { generateInquiryResponse } from '../_lib/aiAgent';
+import { generateInquiryResponse } from '../_lib/aiAgent.js';
 
-async function handleGet(req: VercelRequest & { user: any }, res: VercelResponse) {
+// ✅ CHANGE 2: Remove type annotation from handleGet
+async function handleGet(req: VercelRequest, res: VercelResponse) {
   try {
+    // @ts-ignore - user is added by requireAuth middleware
     const userId = req.user.id;
     const inquiries = await storage.getInquiriesByInfluencer(userId);
     res.json(inquiries);

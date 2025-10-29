@@ -1,9 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireAuth } from '../../_lib/middleware';
-import { storage } from '../../_lib/storage';
-import { sendInquiryStatusEmail } from '../../_lib/email';
+import { requireAuth } from '../../_lib/middleware.js';
+import { storage } from '../../_lib/storage.js';
+import { sendInquiryStatusEmail } from '../../_lib/email.js';
 
-export default requireAuth(async (req, res) => {
+export default requireAuth(async (req: VercelRequest, res: VercelResponse) => {
   if (req.method !== 'PATCH') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
@@ -20,17 +20,15 @@ export default requireAuth(async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    // Get inquiry details before updating
     const inquiry = await storage.getInquiry(id);
     if (!inquiry) {
       return res.status(404).json({ message: 'Inquiry not found' });
     }
 
-    // Update the status
     const updatedInquiry = await storage.updateInquiryStatus(id, status);
 
-    // Send email notification for non-pending statuses
     if (status !== 'pending') {
+      // @ts-ignore - user is added by requireAuth middleware
       const userId = req.user.id;
       const influencer = await storage.getUser(userId);
 
@@ -39,7 +37,6 @@ export default requireAuth(async (req, res) => {
           ? `${influencer.firstName}${influencer.lastName ? ` ${influencer.lastName}` : ''}`
           : influencer.username || 'The influencer';
 
-        // Send email in background (don't await to avoid slowing down response)
         sendInquiryStatusEmail(
           inquiry.businessEmail,
           influencerName,

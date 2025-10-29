@@ -3,7 +3,7 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import session from 'express-session';
 import connectPg from 'connect-pg-simple';
-import { storage } from './storage';
+import { storage } from './storage.js';
 
 // Generate a session secret for development if not provided
 if (!process.env.SESSION_SECRET) {
@@ -134,7 +134,7 @@ export async function initAuth(req: VercelRequest, res: VercelResponse) {
 
 // Middleware to require authentication
 export function requireAuth(
-  handler: (req: VercelRequest & { user: any }, res: VercelResponse) => Promise<void>
+  handler: (req: VercelRequest, res: VercelResponse) => Promise<void | any>
 ) {
   return async (req: VercelRequest, res: VercelResponse) => {
     await initAuth(req, res);
@@ -144,8 +144,7 @@ export function requireAuth(
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    // @ts-ignore
-    req.user = req.user;
-    return handler(req as any, res);
+    // @ts-ignore - Passport adds user to request
+    return handler(req, res);
   };
 }

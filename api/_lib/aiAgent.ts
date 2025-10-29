@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { InfluencerPreferences, Message } from "@shared/schema";
+import type { InfluencerPreferences, Message } from "../../shared/schema.js";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,

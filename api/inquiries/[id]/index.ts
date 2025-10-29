@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireAuth, initAuth } from '../../_lib/middleware';
-import { storage } from '../../_lib/storage';
+import { requireAuth, initAuth } from '../../_lib/middleware.js';
+import { storage } from '../../_lib/storage.js';
 
 async function handleGet(req: VercelRequest, res: VercelResponse) {
   try {
@@ -23,7 +23,7 @@ async function handleGet(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function handleDelete(req: VercelRequest & { user: any }, res: VercelResponse) {
+async function handleDelete(req: VercelRequest, res: VercelResponse) {
   try {
     const { id } = req.query;
 
@@ -37,7 +37,7 @@ async function handleDelete(req: VercelRequest & { user: any }, res: VercelRespo
       return res.status(404).json({ message: 'Inquiry not found' });
     }
 
-    // Verify that the authenticated user is the influencer for this inquiry
+    // @ts-ignore - user is added by requireAuth middleware
     const userId = req.user.id;
     if (inquiry.influencerId !== userId) {
       return res.status(403).json({ message: 'Unauthorized' });
@@ -55,10 +55,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   await initAuth(req, res);
 
   if (req.method === 'GET') {
-    // GET is public (for business chat)
     return handleGet(req, res);
   } else if (req.method === 'DELETE') {
-    // DELETE requires auth
     return requireAuth(handleDelete)(req, res);
   } else {
     res.status(405).json({ message: 'Method not allowed' });

@@ -1,13 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { requireAuth } from '../_lib/middleware';
-import { storage } from '../_lib/storage';
+import { requireAuth } from '../_lib/middleware.js';
+import { storage } from '../_lib/storage.js';
 
-export default requireAuth(async (req, res) => {
+export default requireAuth(async (req: VercelRequest, res: VercelResponse) => {
   if (req.method !== 'PATCH') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
+    // @ts-ignore - user is added by requireAuth middleware
     const userId = req.user.id;
     let { username } = req.body;
 
@@ -15,10 +16,8 @@ export default requireAuth(async (req, res) => {
       return res.status(400).json({ message: 'Username is required' });
     }
 
-    // Normalize username (trim and lowercase)
     username = username.trim().toLowerCase();
 
-    // Validate username format (alphanumeric, hyphens, underscores, 3-30 chars)
     const usernameRegex = /^[a-z0-9_-]{3,30}$/;
     if (!usernameRegex.test(username)) {
       return res.status(400).json({
@@ -27,10 +26,8 @@ export default requireAuth(async (req, res) => {
       });
     }
 
-    // Get current user to check if username is unchanged
     const currentUser = await storage.getUser(userId);
     if (currentUser && currentUser.username === username) {
-      // Username unchanged, return success without DB write
       return res.json({
         id: currentUser.id,
         username: currentUser.username,
@@ -41,7 +38,6 @@ export default requireAuth(async (req, res) => {
       });
     }
 
-    // Check if username is already taken
     const existingUser = await storage.getUserByUsername(username);
     if (existingUser && existingUser.id !== userId) {
       return res.status(409).json({ message: 'Username already taken' });
@@ -49,7 +45,6 @@ export default requireAuth(async (req, res) => {
 
     const user = await storage.updateUsername(userId, username);
 
-    // Return only necessary fields
     res.json({
       id: user.id,
       username: user.username,
