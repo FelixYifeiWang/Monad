@@ -6,24 +6,16 @@ import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 export default defineConfig({
   plugins: [
     react(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer(),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
+    // Only use runtime error overlay in development
+    ...(process.env.NODE_ENV === "development" ? [runtimeErrorOverlay()] : []),
+    // Remove Replit-specific plugins for Vercel
   ],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      // Update assets path to public folder
+      "@assets": path.resolve(import.meta.dirname, "client", "public", "assets"),
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
@@ -35,6 +27,13 @@ export default defineConfig({
     fs: {
       strict: true,
       deny: ["**/.*"],
+    },
+    // Add proxy for local development (routes API calls to your local server)
+    proxy: {
+      "/api": {
+        target: "http://localhost:5000",
+        changeOrigin: true,
+      },
     },
   },
 });

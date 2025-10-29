@@ -4,8 +4,14 @@ import { Chrome, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
+// Add this type definition
+type AuthStatus = {
+  configured: boolean;
+  message: string;
+};
+
 export default function LoginPage() {
-  const { data: authStatus } = useQuery({
+  const { data: authStatus } = useQuery<AuthStatus>({
     queryKey: ['/api/auth/status'],
   });
 
@@ -13,7 +19,8 @@ export default function LoginPage() {
     window.location.href = "/api/auth/google";
   };
 
-  const isConfigured = authStatus?.configured ?? true; // Assume configured until we know otherwise
+  // Check if Google OAuth is configured (will be true once we set up the API endpoint)
+  const isConfigured = authStatus?.configured ?? true;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">

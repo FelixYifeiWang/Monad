@@ -4,3 +4,21 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+.env.local
+.env.production
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Replit-specific (delete these folders)
+.replit
+.local/
+
+# Build outputs
+dist/
+node_modules/
+
+# Vercel
+.vercel
+.vercel

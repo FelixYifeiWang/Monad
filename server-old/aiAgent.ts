@@ -2,8 +2,7 @@ import OpenAI from "openai";
 import type { InfluencerPreferences, Message } from "@shared/schema";
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function generateInquiryResponse(
@@ -227,9 +226,9 @@ Provide a brief recommendation in this EXACT format:
 [1-2 sentence summary of why - BE SPECIFIC about which preference was violated if rejecting]
 
 **Key Details:**
-• Budget: [amount or "Not discussed"]
-• Timeline: [timeline or "Not discussed"]
-• Deliverables: [what they want or "Not discussed"]
+- Budget: [amount or "Not discussed"]
+- Timeline: [timeline or "Not discussed"]
+- Deliverables: [what they want or "Not discussed"]
 
 Keep it SHORT and actionable. No fluff.
 
@@ -238,27 +237,27 @@ Example good format:
 Budget meets minimum rate and project aligns with content preferences. Timeline is reasonable.
 
 **Key Details:**
-• Budget: $1,500
-• Timeline: 2 weeks
-• Deliverables: 3 Instagram posts
+- Budget: $1,500
+- Timeline: 2 weeks
+- Deliverables: 3 Instagram posts
 
 Example good rejection format:
 **REJECT**
 This is a gambling product promotion, which violates the "will not promote gambling" preference. Not a fit.
 
 **Key Details:**
-• Budget: $2,000
-• Timeline: 1 week
-• Deliverables: 5 posts
+- Budget: $2,000
+- Timeline: 1 week
+- Deliverables: 5 posts
 
 Example illegal activity rejection format:
 **REJECT**
 This inquiry involves potentially illegal or fraudulent activities. Cannot proceed with this collaboration.
 
 **Key Details:**
-• Budget: $5,000
-• Timeline: Immediate
-• Deliverables: Various
+- Budget: $5,000
+- Timeline: Immediate
+- Deliverables: Various
 
 Example bad format:
 **Recommendation:** Approve

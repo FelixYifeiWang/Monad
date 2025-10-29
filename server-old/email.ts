@@ -1,41 +1,14 @@
 import { Resend } from 'resend';
 
-let connectionSettings: any;
-
-async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY 
-    ? 'repl ' + process.env.REPL_IDENTITY 
-    : process.env.WEB_REPL_RENEWAL 
-    ? 'depl ' + process.env.WEB_REPL_RENEWAL 
-    : null;
-
-  if (!xReplitToken) {
-    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+// Simple function to get Resend client
+function getResendClient() {
+  const apiKey = process.env.RESEND_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY not found in environment variables');
   }
-
-  connectionSettings = await fetch(
-    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
-    {
-      headers: {
-        'Accept': 'application/json',
-        'X_REPLIT_TOKEN': xReplitToken
-      }
-    }
-  ).then(res => res.json()).then(data => data.items?.[0]);
-
-  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
-    throw new Error('Resend not connected');
-  }
-  return {apiKey: connectionSettings.settings.api_key, fromEmail: connectionSettings.settings.from_email};
-}
-
-async function getUncachableResendClient() {
-  const { apiKey, fromEmail } = await getCredentials();
-  return {
-    client: new Resend(apiKey),
-    fromEmail: fromEmail
-  };
+  
+  return new Resend(apiKey);
 }
 
 export async function sendInquiryStatusEmail(
@@ -45,12 +18,11 @@ export async function sendInquiryStatusEmail(
   additionalInfo?: string
 ) {
   try {
-    const { client, fromEmail } = await getUncachableResendClient();
-
-    if (!fromEmail) {
-      console.error('❌ No "from" email configured in Resend connection. Please add a verified sender email in your Resend dashboard.');
-      return;
-    }
+    const client = getResendClient();
+    
+    // Use a default "from" email - you'll need to verify this domain in Resend
+    // For now, we'll use the one from your env or a default
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'noreply@yourdomain.com';
 
     let subject = '';
     let htmlContent = '';
