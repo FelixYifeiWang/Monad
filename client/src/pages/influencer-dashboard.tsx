@@ -318,8 +318,8 @@ export default function InfluencerDashboard() {
       <header className="border-b sticky top-0 bg-background z-10">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="text-2xl font-bold tracking-tight">
-            <span className="text-primary">Mon</span>
-            <span className="text-foreground">ad</span>
+            <span className="text-primary">Peri.</span>
+            <span className="text-foreground">ai</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/setup">

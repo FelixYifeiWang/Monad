@@ -158,8 +158,8 @@ export default function BusinessChat() {
       <header className="border-b sticky top-0 bg-background z-10">
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="text-2xl font-bold tracking-tight">
-            <span className="text-primary">Mon</span>
-            <span className="text-foreground">ad</span>
+            <span className="text-primary">Peri.</span>
+            <span className="text-foreground">ai</span>
           </div>
         </div>
       </header>
