@@ -11,7 +11,7 @@ export default requireAuth(async (req: VercelRequest, res: VercelResponse) => {
   if (req.method === 'GET') {
     try {
       const prefs = await storage.getInfluencerPreferences(userId);
-      res.json(prefs);
+      res.json(prefs || null);
     } catch (error) {
       console.error('Error fetching preferences:', error);
       res.status(500).json({ message: 'Failed to fetch preferences' });

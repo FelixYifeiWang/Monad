@@ -40,7 +40,7 @@ export async function sendInquiryStatusEmail(
           ${additionalInfo ? `<p><strong>Message:</strong><br>${additionalInfo}</p>` : ''}
           <p>They will be in touch with you soon to discuss next steps.</p>
           <br>
-          <p>Best regards,<br>The Monad Team</p>
+          <p>Best regards,<br>The Peri.ai Team</p>
         `;
         break;
 
@@ -54,7 +54,7 @@ export async function sendInquiryStatusEmail(
           ${additionalInfo ? `<p><strong>Feedback:</strong><br>${additionalInfo}</p>` : ''}
           <p>We appreciate you reaching out and wish you the best with your future campaigns.</p>
           <br>
-          <p>Best regards,<br>The Monad Team</p>
+          <p>Best regards,<br>The Peri.ai Team</p>
         `;
         break;
 
@@ -67,7 +67,7 @@ export async function sendInquiryStatusEmail(
           ${additionalInfo ? `<p><strong>What they need:</strong><br>${additionalInfo}</p>` : ''}
           <p>Please reply to this email with the requested information, and they'll review your proposal again.</p>
           <br>
-          <p>Best regards,<br>The Monad Team</p>
+          <p>Best regards,<br>The Peri.ai Team</p>
         `;
         break;
     }

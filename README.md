@@ -1,8 +1,8 @@
-# Monad
+# Peri.ai
 
 **AI-powered platform connecting influencers with businesses through intelligent inquiry management and automated responses.**
 
-Monad streamlines the collaboration process between influencers and brands by using AI agents to handle initial inquiries, negotiate terms, and provide personalized recommendations—allowing influencers to focus on content creation while maintaining control over final decisions.
+Peri.ai streamlines the collaboration process between influencers and brands by using AI agents to handle initial inquiries, negotiate terms, and provide personalized recommendations—allowing influencers to focus on content creation while maintaining control over final decisions.
 
 ---
 
@@ -55,7 +55,7 @@ Monad streamlines the collaboration process between influencers and brands by us
 ## 📁 Project Structure
 
 ```
-monad/
+Peri.ai/
 ├── client/                 # Frontend React application
 │   ├── src/
 │   │   ├── components/    # Reusable UI components (shadcn/ui)
@@ -117,7 +117,7 @@ monad/
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd monad
+   cd Peri.ai
    ```
 
 2. **Install dependencies**
@@ -327,7 +327,7 @@ With Resend's free tier using `onboarding@resend.dev`:
 - ❌ Cannot send to arbitrary business emails
 
 **Production setup requires:**
-- Own a domain (e.g., `monad.app`)
+- Own a domain (e.g., `peri.ai`)
 - Verify domain in Resend dashboard
 - Update `RESEND_FROM_EMAIL` to `noreply@yourdomain.com`
 
