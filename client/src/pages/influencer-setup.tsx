@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useForm } from "react-hook-form";
@@ -8,7 +8,14 @@ import { queryClient } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,27 +24,227 @@ import { z } from "zod";
 import type { InfluencerPreferences } from "@shared/schema";
 import { Link } from "wouter";
 import LanguageToggle from "@/components/language-toggle";
+import { useLanguage } from "@/providers/language-provider";
 
-const preferencesSchema = z.object({
-  personalContentPreferences: z.string().min(10, "Please provide more details about your content preferences"),
-  monetaryBaseline: z.coerce.number().min(1, "Please set a minimum rate"),
-  contentLength: z.string().min(1, "Please select a content length"),
-  additionalGuidelines: z.string().optional(),
-});
+const translations = {
+  en: {
+    loading: "Loading...",
+    header: {
+      back: "Dashboard",
+    },
+    toast: {
+      unauthorized: {
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+      },
+      usernameUpdated: {
+        title: "Username updated",
+        description: "Your unique URL has been updated.",
+      },
+      usernameError: {
+        title: "Error",
+        description: "Failed to update username. Please try again.",
+      },
+      preferencesSaved: {
+        title: "Preferences saved",
+        description: "Your AI agent has been updated with your preferences.",
+      },
+      preferencesError: {
+        title: "Error",
+        description: "Failed to save preferences. Please try again.",
+      },
+      copySuccess: {
+        title: "Copied!",
+        description: "Your public URL has been copied to clipboard.",
+      },
+    },
+    publicProfile: {
+      cardTitle: "Public Profile URL",
+      cardDescription: "Set your unique username to create a shareable inquiry form link",
+      usernameLabel: "Username",
+      usernamePlaceholder: "your-username",
+      usernameHint: "3-30 characters, letters, numbers, hyphens and underscores only",
+      saveButton: {
+        idle: "Save",
+        pending: "Saving...",
+      },
+      publicFormLabel: "Your Public Inquiry Form",
+      shareHint: "Share this link with businesses who want to collaborate with you",
+      copyButtonLabel: {
+        copied: "Copied",
+        idle: "Copy link",
+      },
+      copyAriaLabel: "Copy public inquiry form link",
+    },
+    aiInstructions: {
+      cardTitle: "AI Agent Instructions",
+      cardDescription: "Configure how your AI agent should handle business inquiries",
+      contentPreferencesLabel: "Content Preferences",
+      contentPreferencesPlaceholder:
+        "Describe the type of content you create, what you will and won't promote, your values, etc.",
+      monetaryLabel: "Minimum Rate ($)",
+      monetaryPlaceholder: "5000",
+      contentLengthLabel: "Preferred Content Length",
+      contentLengthPlaceholder: "Select content length",
+      contentLengthOptions: [
+        { value: "short", label: "Short (30-60 seconds)" },
+        { value: "medium", label: "Medium (1-3 minutes)" },
+        { value: "long", label: "Long (3+ minutes)" },
+        { value: "flexible", label: "Flexible" },
+      ] as const,
+      additionalGuidelinesLabel: "Additional Guidelines (Optional)",
+      additionalGuidelinesPlaceholder: "Any other guidelines or requirements for collaborations...",
+      buttons: {
+        save: "Save Preferences",
+        saving: "Saving...",
+        reset: "Reset",
+      },
+      defaultAdditionalGuidelines:
+        "I prefer creative freedom in how I present collaborations. Typical turnaround time is 2-3 weeks.",
+    },
+    validation: {
+      personalContentPreferences: "Please provide more details about your content preferences",
+      monetaryBaseline: "Please set a minimum rate",
+      contentLength: "Please select a content length",
+    },
+    defaultTemplate: `I create lifestyle and wellness content focused on sustainable living and mindful consumption. I'm passionate about authentic partnerships with brands that align with my values.
 
-type PreferencesFormData = z.infer<typeof preferencesSchema>;
+I will consider collaborations that:
+- Promote eco-friendly or sustainable products
+- Support small businesses and ethical brands
+- Align with wellness, health, or personal development
+
+I will not promote:
+- Fast fashion or unsustainable products
+- Products tested on animals
+- Multi-level marketing schemes
+- Content that conflicts with my values`,
+  },
+  zh: {
+    loading: "加载中…",
+    header: {
+      back: "返回仪表盘",
+    },
+    toast: {
+      unauthorized: {
+        title: "未授权",
+        description: "你已退出登录，正在重新跳转…",
+      },
+      usernameUpdated: {
+        title: "用户名已更新",
+        description: "你的公开链接已经同步。",
+      },
+      usernameError: {
+        title: "错误",
+        description: "更新用户名失败，请稍后再试。",
+      },
+      preferencesSaved: {
+        title: "偏好设置已保存",
+        description: "你的 AI 代理已经根据最新偏好进行更新。",
+      },
+      preferencesError: {
+        title: "错误",
+        description: "保存偏好失败，请稍后再试。",
+      },
+      copySuccess: {
+        title: "已复制",
+        description: "你的公开链接已复制到剪贴板。",
+      },
+    },
+    publicProfile: {
+      cardTitle: "公开资料链接",
+      cardDescription: "设置唯一用户名，创建可分享的询问表单链接",
+      usernameLabel: "用户名",
+      usernamePlaceholder: "your-username",
+      usernameHint: "长度 3-30 个字符，仅限字母、数字、连字符或下划线",
+      saveButton: {
+        idle: "保存",
+        pending: "保存中…",
+      },
+      publicFormLabel: "你的公开询问表单",
+      shareHint: "将此链接分享给希望与你合作的品牌方",
+      copyButtonLabel: {
+        copied: "已复制",
+        idle: "复制链接",
+      },
+      copyAriaLabel: "复制公开询问表单链接",
+    },
+    aiInstructions: {
+      cardTitle: "AI 代理指引",
+      cardDescription: "配置 AI 代理处理品牌询问的方式",
+      contentPreferencesLabel: "内容偏好",
+      contentPreferencesPlaceholder:
+        "描述你擅长的内容类型、愿意或拒绝推广的方向、品牌价值观等。",
+      monetaryLabel: "最低报价（美元）",
+      monetaryPlaceholder: "5000",
+      contentLengthLabel: "偏好的内容时长",
+      contentLengthPlaceholder: "请选择内容时长",
+      contentLengthOptions: [
+        { value: "short", label: "短内容（30-60 秒）" },
+        { value: "medium", label: "中等内容（1-3 分钟）" },
+        { value: "long", label: "长内容（3 分钟以上）" },
+        { value: "flexible", label: "灵活" },
+      ] as const,
+      additionalGuidelinesLabel: "其他指引（可选）",
+      additionalGuidelinesPlaceholder: "填写合作的其他要求或注意事项…",
+      buttons: {
+        save: "保存偏好",
+        saving: "保存中…",
+        reset: "重置",
+      },
+      defaultAdditionalGuidelines: "我通常需要创意自由，标准制作周期约为 2-3 周。",
+    },
+    validation: {
+      personalContentPreferences: "请详细描述你的内容偏好（至少 10 个字符）",
+      monetaryBaseline: "请设置一个最低报价",
+      contentLength: "请选择内容时长",
+    },
+    defaultTemplate: `我专注于可持续生活与身心健康领域内容，擅长与价值观一致的品牌建立真诚合作。
+
+我会考虑的合作：
+- 推广环保或可持续产品
+- 支持中小型企业与道德品牌
+- 与健康、养生或个人成长相关
+
+我不会推广：
+- 快速时尚或不环保的产品
+- 动物实验相关产品
+- 多层次传销/直销项目
+- 与我价值观冲突的内容`,
+  },
+} as const;
+
+type ValidationCopy = (typeof translations)[keyof typeof translations]["validation"];
+
+const buildPreferencesSchema = (validation: ValidationCopy) =>
+  z.object({
+    personalContentPreferences: z
+      .string()
+      .min(10, validation.personalContentPreferences),
+    monetaryBaseline: z.coerce.number().min(1, validation.monetaryBaseline),
+    contentLength: z.string().min(1, validation.contentLength),
+    additionalGuidelines: z.string().optional(),
+  });
+
+type PreferencesFormData = z.infer<ReturnType<typeof buildPreferencesSchema>>;
 
 export default function InfluencerSetup() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { language } = useLanguage();
+  const copy = useMemo(() => translations[language], [language]);
+  const preferencesSchema = useMemo(
+    () => buildPreferencesSchema(copy.validation),
+    [copy],
+  );
   const [username, setUsername] = useState("");
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: copy.toast.unauthorized.title,
+        description: copy.toast.unauthorized.description,
         variant: "destructive",
       });
       setTimeout(() => {
@@ -45,7 +252,7 @@ export default function InfluencerSetup() {
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, toast, copy]);
 
   useEffect(() => {
     if (user) {
@@ -58,27 +265,19 @@ export default function InfluencerSetup() {
     enabled: isAuthenticated,
   });
 
-  const defaultTemplateText = `I create lifestyle and wellness content focused on sustainable living and mindful consumption. I'm passionate about authentic partnerships with brands that align with my values.
-
-I will consider collaborations that:
-- Promote eco-friendly or sustainable products
-- Support small businesses and ethical brands
-- Align with wellness, health, or personal development
-
-I will not promote:
-- Fast fashion or unsustainable products
-- Products tested on animals
-- Multi-level marketing schemes
-- Content that conflicts with my values`;
+  const defaultValues = useMemo<PreferencesFormData>(
+    () => ({
+      personalContentPreferences: copy.defaultTemplate,
+      monetaryBaseline: 2000,
+      contentLength: "flexible",
+      additionalGuidelines: copy.aiInstructions.defaultAdditionalGuidelines,
+    }),
+    [copy],
+  );
 
   const form = useForm<PreferencesFormData>({
     resolver: zodResolver(preferencesSchema),
-    defaultValues: {
-      personalContentPreferences: defaultTemplateText,
-      monetaryBaseline: 2000,
-      contentLength: "flexible",
-      additionalGuidelines: "I prefer creative freedom in how I present collaborations. Typical turnaround time is 2-3 weeks.",
-    },
+    defaultValues,
   });
 
   useEffect(() => {
@@ -110,15 +309,15 @@ I will not promote:
       await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       toast({
-        title: "Username updated",
-        description: "Your unique URL has been updated.",
+        title: copy.toast.usernameUpdated.title,
+        description: copy.toast.usernameUpdated.description,
       });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: copy.toast.unauthorized.title,
+          description: copy.toast.unauthorized.description,
           variant: "destructive",
         });
         setTimeout(() => {
@@ -127,8 +326,8 @@ I will not promote:
         return;
       }
       toast({
-        title: "Error",
-        description: error.message || "Failed to update username. Please try again.",
+        title: copy.toast.usernameError.title,
+        description: error.message || copy.toast.usernameError.description,
         variant: "destructive",
       });
     },
@@ -150,15 +349,15 @@ I will not promote:
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
       toast({
-        title: "Preferences saved",
-        description: "Your AI agent has been updated with your preferences.",
+        title: copy.toast.preferencesSaved.title,
+        description: copy.toast.preferencesSaved.description,
       });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: copy.toast.unauthorized.title,
+          description: copy.toast.unauthorized.description,
           variant: "destructive",
         });
         setTimeout(() => {
@@ -167,8 +366,8 @@ I will not promote:
         return;
       }
       toast({
-        title: "Error",
-        description: "Failed to save preferences. Please try again.",
+        title: copy.toast.preferencesError.title,
+        description: copy.toast.preferencesError.description,
         variant: "destructive",
       });
     },
@@ -197,15 +396,15 @@ I will not promote:
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
     toast({
-      title: "Copied!",
-      description: "Your public URL has been copied to clipboard.",
+      title: copy.toast.copySuccess.title,
+      description: copy.toast.copySuccess.description,
     });
   };
 
   if (isLoading || prefsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{copy.loading}</div>
       </div>
     );
   }
@@ -225,7 +424,7 @@ I will not promote:
             <Link href="/dashboard">
               <Button variant="ghost" size="sm" className="gap-2" data-testid="button-back-to-dashboard">
                 <ArrowLeft className="h-4 w-4" />
-                Dashboard
+                {copy.header.back}
               </Button>
             </Link>
           </div>
@@ -251,22 +450,22 @@ I will not promote:
           <CardHeader>
             <div className="flex items-center gap-2">
               <LinkIcon className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl">Public Profile URL</CardTitle>
+              <CardTitle className="text-2xl">{copy.publicProfile.cardTitle}</CardTitle>
             </div>
             <CardDescription className="text-base">
-              Set your unique username to create a shareable inquiry form link
+              {copy.publicProfile.cardDescription}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleUsernameSubmit} className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Username</label>
+                <label className="text-sm font-medium">{copy.publicProfile.usernameLabel}</label>
                 <div className="flex gap-2">
                   <div className="flex-1 flex items-center gap-2 border rounded-lg px-3">
                     <span className="text-sm text-muted-foreground">{window.location.origin}/i/</span>
                     <Input
                       className="border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                      placeholder="your-username"
+                      placeholder={copy.publicProfile.usernamePlaceholder}
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       data-testid="input-username"
@@ -277,11 +476,13 @@ I will not promote:
                     disabled={updateUsernameMutation.isPending || !username || username === (user as any)?.username}
                     data-testid="button-save-username"
                   >
-                    {updateUsernameMutation.isPending ? "Saving..." : "Save"}
+                    {updateUsernameMutation.isPending
+                      ? copy.publicProfile.saveButton.pending
+                      : copy.publicProfile.saveButton.idle}
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  3-30 characters, letters, numbers, hyphens and underscores only
+                  {copy.publicProfile.usernameHint}
                 </p>
               </div>
             </form>
@@ -290,7 +491,9 @@ I will not promote:
               <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1">
-                    <p className="text-sm font-medium mb-1">Your Public Inquiry Form</p>
+                    <p className="text-sm font-medium mb-1">
+                      {copy.publicProfile.publicFormLabel}
+                    </p>
                     <a
                       href={publicUrl}
                       target="_blank"
@@ -305,12 +508,18 @@ I will not promote:
                     size="sm"
                     onClick={copyPublicUrl}
                     data-testid="button-copy-url"
+                    aria-label={copy.publicProfile.copyAriaLabel}
                   >
                     {isCopied ? <CheckCircle className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    <span className="sr-only">
+                      {isCopied
+                        ? copy.publicProfile.copyButtonLabel.copied
+                        : copy.publicProfile.copyButtonLabel.idle}
+                    </span>
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Share this link with businesses who want to collaborate with you
+                  {copy.publicProfile.shareHint}
                 </p>
               </div>
             )}
@@ -321,10 +530,10 @@ I will not promote:
           <CardHeader>
             <div className="flex items-center gap-2">
               <Sparkles className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl">AI Agent Instructions</CardTitle>
+              <CardTitle className="text-2xl">{copy.aiInstructions.cardTitle}</CardTitle>
             </div>
             <CardDescription className="text-base">
-              Configure how your AI agent should handle business inquiries
+              {copy.aiInstructions.cardDescription}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -335,10 +544,10 @@ I will not promote:
                   name="personalContentPreferences"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Content Preferences</FormLabel>
+                      <FormLabel>{copy.aiInstructions.contentPreferencesLabel}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe the type of content you create, what you will and won't promote, your values, etc."
+                          placeholder={copy.aiInstructions.contentPreferencesPlaceholder}
                           className="min-h-32 resize-none"
                           {...field}
                           data-testid="input-content-preferences"
@@ -354,11 +563,11 @@ I will not promote:
                   name="monetaryBaseline"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Minimum Rate ($)</FormLabel>
+                      <FormLabel>{copy.aiInstructions.monetaryLabel}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="5000"
+                          placeholder={copy.aiInstructions.monetaryPlaceholder}
                           {...field}
                           data-testid="input-monetary-baseline"
                         />
@@ -373,18 +582,19 @@ I will not promote:
                   name="contentLength"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Preferred Content Length</FormLabel>
+                      <FormLabel>{copy.aiInstructions.contentLengthLabel}</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-content-length">
-                            <SelectValue placeholder="Select content length" />
+                            <SelectValue placeholder={copy.aiInstructions.contentLengthPlaceholder} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="short">Short (30-60 seconds)</SelectItem>
-                          <SelectItem value="medium">Medium (1-3 minutes)</SelectItem>
-                          <SelectItem value="long">Long (3+ minutes)</SelectItem>
-                          <SelectItem value="flexible">Flexible</SelectItem>
+                          {copy.aiInstructions.contentLengthOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -397,10 +607,10 @@ I will not promote:
                   name="additionalGuidelines"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Additional Guidelines (Optional)</FormLabel>
+                      <FormLabel>{copy.aiInstructions.additionalGuidelinesLabel}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Any other guidelines or requirements for collaborations..."
+                          placeholder={copy.aiInstructions.additionalGuidelinesPlaceholder}
                           className="min-h-24 resize-none"
                           {...field}
                           data-testid="input-additional-guidelines"
@@ -417,16 +627,16 @@ I will not promote:
                     disabled={saveMutation.isPending}
                     data-testid="button-save-preferences"
                   >
-                    {saveMutation.isPending ? "Saving..." : "Save Preferences"}
+                    {saveMutation.isPending ? copy.aiInstructions.buttons.saving : copy.aiInstructions.buttons.save}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => form.reset()}
+                    onClick={() => form.reset(defaultValues)}
                     disabled={saveMutation.isPending}
                     data-testid="button-reset"
                   >
-                    Reset
+                    {copy.aiInstructions.buttons.reset}
                   </Button>
                 </div>
               </form>
