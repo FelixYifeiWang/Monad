@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
 import { Toggle } from "@/components/ui/toggle";
 import { cn } from "@/lib/utils";
-
-type SupportedLanguage = "en" | "zh";
+import { useLanguage } from "@/providers/language-provider";
+import type { SupportedLanguage } from "@/providers/language-provider";
 
 type LanguageToggleProps = {
   className?: string;
@@ -13,24 +12,16 @@ type LanguageToggleProps = {
 
 export function LanguageToggle({ className }: LanguageToggleProps) {
   const queryClient = useQueryClient();
-  const { user, isAuthenticated, isLoading } = useAuth();
-  const [localLanguage, setLocalLanguage] = useState<SupportedLanguage>("en");
-
-  useEffect(() => {
-    if (user?.languagePreference === "zh") {
-      setLocalLanguage("zh");
-    } else {
-      setLocalLanguage("en");
-    }
-  }, [user?.languagePreference]);
+  const { isAuthenticated } = useAuth();
+  const { language, setLanguage, user } = useLanguage();
 
   const mutation = useMutation({
-    mutationFn: async (language: SupportedLanguage) => {
+    mutationFn: async (newLanguage: SupportedLanguage) => {
       const response = await fetch("/api/auth/language", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ language }),
+        body: JSON.stringify({ language: newLanguage }),
       });
 
       if (!response.ok) {
@@ -45,35 +36,29 @@ export function LanguageToggle({ className }: LanguageToggleProps) {
     },
   });
 
-  const nextLanguage = useMemo<SupportedLanguage>(
-    () => (localLanguage === "en" ? "zh" : "en"),
-    [localLanguage],
-  );
+  const handleToggle = (pressed: boolean) => {
+    const targetLanguage: SupportedLanguage = pressed ? "zh" : "en";
+    if (targetLanguage === language) {
+      return;
+    }
 
-  const handleToggle = () => {
-    const previousLanguage = localLanguage;
-    const targetLanguage = nextLanguage;
+    const previousLanguage = language;
+    setLanguage(targetLanguage);
 
-    setLocalLanguage(targetLanguage);
-
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       return;
     }
 
     mutation.mutate(targetLanguage, {
       onError: () => {
-        setLocalLanguage(previousLanguage);
+        setLanguage(previousLanguage);
       },
     });
   };
 
-  if (isLoading) {
-    return null;
-  }
-
   return (
     <Toggle
-      pressed={localLanguage === "zh"}
+      pressed={language === "zh"}
       onPressedChange={handleToggle}
       disabled={mutation.isPending}
       aria-label="Toggle language"
@@ -84,11 +69,11 @@ export function LanguageToggle({ className }: LanguageToggleProps) {
       data-testid="button-language-toggle"
     >
       <span className="flex items-center gap-1">
-        <span className={localLanguage === "en" ? "text-primary" : "text-muted-foreground"}>
+        <span className={language === "en" ? "text-primary" : "text-muted-foreground"}>
           EN
         </span>
         <span className="text-muted-foreground">/</span>
-        <span className={localLanguage === "zh" ? "text-primary" : "text-muted-foreground"}>
+        <span className={language === "zh" ? "text-primary" : "text-muted-foreground"}>
           中文
         </span>
       </span>

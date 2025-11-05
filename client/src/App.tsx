@@ -13,6 +13,7 @@ import NotFound from "@/pages/not-found";
 import OnboardingPage from "@/pages/onboarding";
 import type { InfluencerPreferences } from "@shared/schema";
 import { getQueryFn } from "@/lib/queryClient";
+import { LanguageProvider } from "@/providers/language-provider";
 
 const preferencesQueryFn = getQueryFn<InfluencerPreferences | null>({ on401: "returnNull" });
 
@@ -70,8 +71,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Router />
+        <LanguageProvider>
+          <Toaster />
+          <Router />
+        </LanguageProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
