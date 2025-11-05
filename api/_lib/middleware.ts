@@ -1,10 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as LocalStrategy } from 'passport-local';
 import session from 'express-session';
 import connectPg from 'connect-pg-simple';
 import { storage } from './storage.js';
 import type { SupportedLanguage } from './aiAgent.js';
+import { sanitizeUser } from './userUtils.js';
+import bcrypt from 'bcryptjs';
 
 const PREFERRED_LANGUAGE_COOKIE = 'preferred_language';
 const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['en', 'zh'];
@@ -21,6 +24,10 @@ function parsePreferredLanguage(cookieHeader?: string): SupportedLanguage | unde
     }
   }
   return undefined;
+}
+
+export function getPreferredLanguageFromRequest(req: VercelRequest): SupportedLanguage | undefined {
+  return parsePreferredLanguage(req.headers?.cookie);
 }
 
 // Generate a session secret for development if not provided
@@ -67,7 +74,10 @@ export function configurePassport() {
           console.log('✅ Google OAuth successful:', email);
 
           const preferredLanguageFromCookie = parsePreferredLanguage(req.headers?.cookie);
-          const existingUser = await storage.getUser(profile.id);
+          const userById = await storage.getUser(profile.id);
+          const userByEmail = await storage.getUserByEmail(email);
+
+          const existingUser = userByEmail ?? userById;
           const existingLanguage = existingUser?.languagePreference === 'zh'
             ? 'zh'
             : existingUser?.languagePreference === 'en'
@@ -75,25 +85,50 @@ export function configurePassport() {
               : undefined;
           const resolvedLanguage: SupportedLanguage = existingLanguage || preferredLanguageFromCookie || 'en';
 
-          await storage.upsertUser({
-            id: profile.id,
+          const idToUse = existingUser?.id ?? profile.id;
+
+          const updatedUser = await storage.upsertUser({
+            id: idToUse,
             email,
-            firstName: profile.name?.givenName || null,
-            lastName: profile.name?.familyName || null,
-            profileImageUrl: profile.photos?.[0]?.value || null,
+            username: existingUser?.username ?? null,
+            firstName: profile.name?.givenName || existingUser?.firstName || null,
+            lastName: profile.name?.familyName || existingUser?.lastName || null,
+            profileImageUrl: profile.photos?.[0]?.value || existingUser?.profileImageUrl || null,
+            passwordHash: existingUser?.passwordHash ?? null,
             languagePreference: resolvedLanguage,
           });
 
-          done(null, {
-            id: profile.id,
-            email,
-            firstName: profile.name?.givenName,
-            lastName: profile.name?.familyName,
-            profileImageUrl: profile.photos?.[0]?.value,
-            languagePreference: resolvedLanguage,
-          });
+          done(null, sanitizeUser(updatedUser));
         } catch (error) {
           console.error('❌ OAuth error:', error);
+          done(error as Error);
+        }
+      }
+    )
+  );
+
+  passport.use(
+    new LocalStrategy(
+      {
+        usernameField: 'email',
+        passwordField: 'password',
+        session: true,
+      },
+      async (email: string, password: string, done) => {
+        try {
+          const normalizedEmail = email.trim().toLowerCase();
+          const user = await storage.getUserByEmail(normalizedEmail);
+          if (!user || !user.passwordHash) {
+            return done(null, false, { message: 'Invalid email or password' });
+          }
+
+          const isValid = await bcrypt.compare(password, user.passwordHash);
+          if (!isValid) {
+            return done(null, false, { message: 'Invalid email or password' });
+          }
+
+          done(null, sanitizeUser(user));
+        } catch (error) {
           done(error as Error);
         }
       }
@@ -114,7 +149,7 @@ export function configurePassport() {
         return done(null, false);
       }
       console.log('✅ User deserialized:', user.email);
-      done(null, user);
+      done(null, sanitizeUser(user));
     } catch (error) {
       console.error('❌ Deserialization error:', error);
       done(null, false);

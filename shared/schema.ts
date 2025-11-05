@@ -31,6 +31,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  passwordHash: varchar("password_hash"),
   languagePreference: varchar("language_preference").notNull().default("en"),
   userType: varchar("user_type", { enum: ["influencer", "business"] }).notNull().default("influencer"),
   createdAt: timestamp("created_at").defaultNow(),
