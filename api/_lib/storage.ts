@@ -21,6 +21,7 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUsername(userId: string, username: string): Promise<User>;
+  updateLanguagePreference(userId: string, language: string): Promise<User>;
   
   // Influencer preferences
   getInfluencerPreferences(userId: string): Promise<InfluencerPreferences | undefined>;
@@ -70,6 +71,15 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ username, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async updateLanguagePreference(userId: string, language: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ languagePreference: language, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning();
     return user;

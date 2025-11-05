@@ -35,6 +35,7 @@ export default requireAuth(async (req: VercelRequest, res: VercelResponse) => {
         firstName: currentUser.firstName,
         lastName: currentUser.lastName,
         profileImageUrl: currentUser.profileImageUrl,
+        languagePreference: currentUser.languagePreference,
       });
     }
 
@@ -52,6 +53,7 @@ export default requireAuth(async (req: VercelRequest, res: VercelResponse) => {
       firstName: user.firstName,
       lastName: user.lastName,
       profileImageUrl: user.profileImageUrl,
+      languagePreference: user.languagePreference,
     });
   } catch (error) {
     console.error('Error updating username:', error);
