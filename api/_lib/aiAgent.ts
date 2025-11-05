@@ -5,7 +5,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-type SupportedLanguage = "en" | "zh";
+export type SupportedLanguage = "en" | "zh";
 
 const LANGUAGE_DIRECTIVES: Record<SupportedLanguage, string> = {
   en: "Respond in natural, conversational English. Avoid other languages unless you are quoting the business.",
@@ -20,6 +20,11 @@ const FALLBACK_INQUIRY_RESPONSE: Record<SupportedLanguage, string> = {
 const FALLBACK_CHAT_RESPONSE: Record<SupportedLanguage, string> = {
   en: "Could you elaborate on that?",
   zh: "可以再详细说明一下吗？",
+};
+
+const FALLBACK_RECOMMENDATION: Record<SupportedLanguage, string> = {
+  en: "**NEEDS INFO**\n\nUnable to generate a recommendation. Please review the conversation manually.\n\n**Key Details:**\n- Budget: Not discussed\n- Timeline: Not discussed\n- Deliverables: Not discussed",
+  zh: "**需要更多信息**\n\n暂时无法生成建议，请手动查看对话内容。\n\n**关键信息：**\n- 预算：未讨论\n- 时间：未讨论\n- 交付物：未讨论",
 };
 
 function getLanguageInstruction(language: SupportedLanguage) {
@@ -224,9 +229,14 @@ export async function generateRecommendation(
     price?: number | null;
     companyInfo?: string | null;
   },
-  preferences: InfluencerPreferences
+  preferences: InfluencerPreferences,
+  language: SupportedLanguage = "en"
 ): Promise<string> {
+  const languageInstruction = getLanguageInstruction(language);
   const systemPrompt = `You are an AI advisor helping an influencer decide on a business collaboration. Be CONCISE and DIRECT.
+
+LANGUAGE REQUIREMENT:
+${languageInstruction}
 
 Influencer's Preferences:
 - Content Preferences: ${preferences.personalContentPreferences}
@@ -324,9 +334,9 @@ Based on this conversation, what is your recommendation?`,
       max_tokens: 500,
     });
 
-    return completion.choices[0]?.message?.content || "**NEEDS INFO**\n\nNeed more details to make a decision.\n\n**Key Details:**\n• Budget: Not discussed\n• Timeline: Not discussed\n• Deliverables: Not discussed";
+    return completion.choices[0]?.message?.content || FALLBACK_RECOMMENDATION[language];
   } catch (error) {
     console.error("Error generating recommendation:", error);
-    return "**NEEDS INFO**\n\nUnable to analyze. Review conversation manually.\n\n**Key Details:**\n• Budget: Not discussed\n• Timeline: Not discussed\n• Deliverables: Not discussed";
+    return FALLBACK_RECOMMENDATION[language];
   }
 }

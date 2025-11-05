@@ -4,7 +4,7 @@ import { storage } from '../_lib/storage.js';
 // ✅ CHANGE 1: Fix import path
 import { insertInquirySchema } from '../../shared/schema.js';
 import { fromError } from 'zod-validation-error';
-import { generateInquiryResponse } from '../_lib/aiAgent.js';
+import { generateInquiryResponse, type SupportedLanguage } from '../_lib/aiAgent.js';
 
 // ✅ CHANGE 2: Remove type annotation from handleGet
 async function handleGet(req: VercelRequest, res: VercelResponse) {
@@ -23,7 +23,7 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
   try {
     const rawBody = (req.body ?? {}) as Record<string, unknown>;
     const rawLanguage = typeof rawBody.language === 'string' ? rawBody.language : undefined;
-    const language = rawLanguage === 'zh' ? 'zh' : 'en';
+    const language: SupportedLanguage = rawLanguage === 'zh' ? 'zh' : 'en';
 
     const {
       language: _ignoredLanguage,

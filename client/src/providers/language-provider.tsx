@@ -14,17 +14,45 @@ type LanguageContextValue = {
 const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
 
 const STORAGE_KEY = "languagePreference";
+const COOKIE_NAME = "preferred_language";
+const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365; // 1 year
+
+function readCookieLanguage(): SupportedLanguage | undefined {
+  if (typeof document === "undefined") return undefined;
+  const cookieString = document.cookie || "";
+  const parts = cookieString.split(";").map((part) => part.trim());
+  for (const part of parts) {
+    if (part.startsWith(`${COOKIE_NAME}=`)) {
+      const value = part.substring(COOKIE_NAME.length + 1).toLowerCase();
+      if (value === "zh") return "zh";
+      if (value === "en") return "en";
+    }
+  }
+  return undefined;
+}
+
+function writeCookieLanguage(language: SupportedLanguage) {
+  if (typeof document === "undefined") return;
+  document.cookie = `${COOKIE_NAME}=${language}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
+}
 
 export function LanguageProvider({ children }: PropsWithChildren) {
   const { user } = useAuth();
   const [language, setLanguageState] = useState<SupportedLanguage>("en");
 
-  // Initialize from localStorage for guests
+  // Initialize from cookie/localStorage for guests
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const cookieLanguage = readCookieLanguage();
+    if (cookieLanguage) {
+      setLanguageState(cookieLanguage);
+      window.localStorage.setItem(STORAGE_KEY, cookieLanguage);
+      return;
+    }
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored === "en" || stored === "zh") {
       setLanguageState(stored);
+      writeCookieLanguage(stored);
     }
   }, []);
 
@@ -36,6 +64,7 @@ export function LanguageProvider({ children }: PropsWithChildren) {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(STORAGE_KEY, normalized);
     }
+    writeCookieLanguage(normalized);
   }, [user?.languagePreference]);
 
   const setLanguage = useCallback((next: SupportedLanguage) => {
@@ -43,6 +72,7 @@ export function LanguageProvider({ children }: PropsWithChildren) {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(STORAGE_KEY, next);
     }
+    writeCookieLanguage(next);
   }, []);
 
   const value = useMemo<LanguageContextValue>(

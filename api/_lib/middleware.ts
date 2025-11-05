@@ -4,6 +4,24 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import session from 'express-session';
 import connectPg from 'connect-pg-simple';
 import { storage } from './storage.js';
+import type { SupportedLanguage } from './aiAgent.js';
+
+const PREFERRED_LANGUAGE_COOKIE = 'preferred_language';
+const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['en', 'zh'];
+
+function parsePreferredLanguage(cookieHeader?: string): SupportedLanguage | undefined {
+  if (!cookieHeader) return undefined;
+  const parts = cookieHeader.split(';').map((part) => part.trim());
+  for (const part of parts) {
+    if (part.startsWith(`${PREFERRED_LANGUAGE_COOKIE}=`)) {
+      const value = part.substring(PREFERRED_LANGUAGE_COOKIE.length + 1).toLowerCase();
+      if (SUPPORTED_LANGUAGES.includes(value as SupportedLanguage)) {
+        return value as SupportedLanguage;
+      }
+    }
+  }
+  return undefined;
+}
 
 // Generate a session secret for development if not provided
 if (!process.env.SESSION_SECRET) {
@@ -37,8 +55,9 @@ export function configurePassport() {
         clientID: process.env.GOOGLE_CLIENT_ID || 'placeholder',
         clientSecret: process.env.GOOGLE_CLIENT_SECRET || 'placeholder',
         callbackURL: `${baseUrl}/api/auth/google/callback`,
+        passReqToCallback: true,
       },
-      async (accessToken: string, refreshToken: string, profile: any, done: any) => {
+      async (req: any, accessToken: string, refreshToken: string, profile: any, done: any) => {
         try {
           const email = profile.emails?.[0]?.value;
           if (!email) {
@@ -47,12 +66,22 @@ export function configurePassport() {
 
           console.log('✅ Google OAuth successful:', email);
 
+          const preferredLanguageFromCookie = parsePreferredLanguage(req.headers?.cookie);
+          const existingUser = await storage.getUser(profile.id);
+          const existingLanguage = existingUser?.languagePreference === 'zh'
+            ? 'zh'
+            : existingUser?.languagePreference === 'en'
+              ? 'en'
+              : undefined;
+          const resolvedLanguage: SupportedLanguage = preferredLanguageFromCookie || existingLanguage || 'en';
+
           await storage.upsertUser({
             id: profile.id,
             email,
             firstName: profile.name?.givenName || null,
             lastName: profile.name?.familyName || null,
             profileImageUrl: profile.photos?.[0]?.value || null,
+            languagePreference: resolvedLanguage,
           });
 
           done(null, {
@@ -61,6 +90,7 @@ export function configurePassport() {
             firstName: profile.name?.givenName,
             lastName: profile.name?.familyName,
             profileImageUrl: profile.photos?.[0]?.value,
+            languagePreference: resolvedLanguage,
           });
         } catch (error) {
           console.error('❌ OAuth error:', error);

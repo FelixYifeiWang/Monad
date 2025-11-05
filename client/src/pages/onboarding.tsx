@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import type { InfluencerPreferences } from "@shared/schema";
 import { getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/providers/language-provider";
 
 type ContentLength = "short" | "medium" | "long" | "flexible";
 
@@ -12,32 +13,157 @@ const preferencesQueryFn = getQueryFn<InfluencerPreferences | null>({
   on401: "returnNull",
 });
 
-const contentLengthOptions: Array<{
-  value: ContentLength;
-  label: string;
-  helper: string;
-}> = [
-  {
-    value: "short",
-    label: "Short",
-    helper: "Snappy formats like Reels, Shorts, or TikToks.",
+const translations = {
+  en: {
+    loading: "Loading…",
+    toast: {
+      errorTitle: "Something went wrong",
+      errorDescription: "Failed to save preferences.",
+    },
+    buttons: {
+      continue: "Continue",
+      saving: "Saving...",
+    },
+    steps: {
+      intro: {
+        title: "Let’s tailor your experience.",
+        description: "Answer a few quick questions so your AI agent can represent you perfectly.",
+      },
+      monetary: {
+        title: "What’s your monetary incentive range",
+        highlight: "(lowest-highest)?",
+        description: "Help brands understand the budget you typically work within.",
+        placeholder: "e.g. $100 - $1000",
+        baselinePrefix: "We’ll set your baseline to the lowest value you provide:",
+        baselineSuffix: "from this range.",
+      },
+      contentLength: {
+        title: "How long is the content you prefer to create?",
+        description: "Pick the format that best reflects your usual collaborations.",
+      },
+      preferences: {
+        title: "Share your content style and guidelines",
+        description: "Tell us what resonates with you and any guardrails brands should know.",
+        labels: {
+          personal: "Personal content preferences",
+          additional: "Additional guidelines (optional)",
+        },
+        placeholders: {
+          personal: "Themes you love, brand values you align with, or types of stories you share.",
+          additional: "Any do’s and don’ts, collaboration preferences, or timelines.",
+        },
+      },
+    },
+    contentLengthOptions: [
+      {
+        value: "short" as ContentLength,
+        label: "Short",
+        helper: "Snappy formats like Reels, Shorts, or TikToks.",
+      },
+      {
+        value: "medium" as ContentLength,
+        label: "Medium",
+        helper: "Standard feed posts or videos under 5 minutes.",
+      },
+      {
+        value: "long" as ContentLength,
+        label: "Long",
+        helper: "Deep dives, livestreams, or detailed reviews.",
+      },
+      {
+        value: "flexible" as ContentLength,
+        label: "Flexible",
+        helper: "Open to experimenting with different lengths.",
+      },
+    ],
+    defaults: {
+      additionalGuidelines:
+        "I prefer creative freedom in how I present collaborations. Typical turnaround time is 2-3 weeks.",
+    },
+    errors: {
+      monetaryInvalid: "Please enter a valid monetary range (numbers only).",
+      contentLengthMissing: "Please select the content length you prefer.",
+      preferencesShort: "Tell us a bit more about your style (at least 10 characters).",
+      monetaryMissing: "Please provide your monetary range before continuing.",
+    },
+    baselineFallback: "…",
   },
-  {
-    value: "medium",
-    label: "Medium",
-    helper: "Standard feed posts or videos under 5 minutes.",
+  zh: {
+    loading: "加载中…",
+    toast: {
+      errorTitle: "发生了错误",
+      errorDescription: "保存偏好设置失败。",
+    },
+    buttons: {
+      continue: "继续",
+      saving: "保存中…",
+    },
+    steps: {
+      intro: {
+        title: "让我们为你量身定制体验",
+        description: "回答几个快速问题，让你的 AI 代理更好地代表你。",
+      },
+      monetary: {
+        title: "你的合作预算范围",
+        highlight: "（最低-最高）？",
+        description: "帮助品牌了解与你合作的预算区间。",
+        placeholder: "例如 ¥800 - ¥3000",
+        baselinePrefix: "我们会将最低值设为你的基准价：",
+        baselineSuffix: "，来自你提供的区间。",
+      },
+      contentLength: {
+        title: "你偏好的内容时长是？",
+        description: "选择最符合你常规合作形式的内容长度。",
+      },
+      preferences: {
+        title: "分享你的内容风格与合作指引",
+        description: "告诉我们你喜欢的内容、品牌调性以及需要品牌遵守的注意事项。",
+        labels: {
+          personal: "个人内容偏好",
+          additional: "额外指引（可选）",
+        },
+        placeholders: {
+          personal: "你擅长的主题、契合的品牌价值观、或经常分享的故事方向。",
+          additional: "填写合作的其他要求、禁忌或时间安排等。",
+        },
+      },
+    },
+    contentLengthOptions: [
+      {
+        value: "short" as ContentLength,
+        label: "短内容",
+        helper: "适合 Reels、短视频或快节奏内容。",
+      },
+      {
+        value: "medium" as ContentLength,
+        label: "中等内容",
+        helper: "标准图文或 5 分钟以内的视频。",
+      },
+      {
+        value: "long" as ContentLength,
+        label: "长内容",
+        helper: "适合深度解析、直播或详细测评。",
+      },
+      {
+        value: "flexible" as ContentLength,
+        label: "灵活",
+        helper: "愿意尝试不同形式和长度。",
+      },
+    ],
+    defaults: {
+      additionalGuidelines: "我通常需要创意自由，常规制作周期约为 2-3 周。",
+    },
+    errors: {
+      monetaryInvalid: "请输入有效的预算区间（仅限数字）",
+      contentLengthMissing: "请选择你偏好的内容时长。",
+      preferencesShort: "请再多分享一些你的风格（至少 10 个字符）。",
+      monetaryMissing: "请先提供你的预算区间再继续。",
+    },
+    baselineFallback: "…",
   },
-  {
-    value: "long",
-    label: "Long",
-    helper: "Deep dives, livestreams, or detailed reviews.",
-  },
-  {
-    value: "flexible",
-    label: "Flexible",
-    helper: "Open to experimenting with different lengths.",
-  },
-];
+} as const;
+
+type OnboardingCopy = (typeof translations)[keyof typeof translations];
 
 const boardStyle: CSSProperties = {
   backgroundImage: "url(/images/onboard_board.png)",
@@ -74,6 +200,9 @@ const parseMonetaryBaseline = (input: string): number | null => {
 
 export default function OnboardingPage() {
   const { isAuthenticated, isLoading } = useAuth();
+  const { language } = useLanguage();
+  const copy = useMemo<OnboardingCopy>(() => translations[language], [language]);
+  const localizedContentLengthOptions = copy.contentLengthOptions;
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -140,9 +269,9 @@ export default function OnboardingPage() {
     },
     onError: (err: unknown) => {
       const message =
-        err instanceof Error ? err.message : "Failed to save preferences.";
+        err instanceof Error ? err.message : copy.toast.errorDescription;
       toast({
-        title: "Something went wrong",
+        title: copy.toast.errorTitle,
         description: message,
         variant: "destructive",
       });
@@ -152,7 +281,7 @@ export default function OnboardingPage() {
   if (isLoading || (isAuthenticated && preferencesLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="text-lg font-medium text-slate-500">Loading…</div>
+        <div className="text-lg font-medium text-slate-500">{copy.loading}</div>
       </div>
     );
   }
@@ -168,7 +297,7 @@ export default function OnboardingPage() {
     if (stepIndex === 1) {
       const parsed = parseMonetaryBaseline(monetaryInput);
       if (!parsed) {
-        setError("Please enter a valid monetary range (numbers only).");
+        setError(copy.errors.monetaryInvalid);
         return;
       }
       setMonetaryBaseline(parsed);
@@ -178,7 +307,7 @@ export default function OnboardingPage() {
 
     if (stepIndex === 2) {
       if (!contentLength) {
-        setError("Please select the content length you prefer.");
+        setError(copy.errors.contentLengthMissing);
         return;
       }
       setStepIndex(3);
@@ -187,12 +316,12 @@ export default function OnboardingPage() {
 
     const trimmedPreferences = personalPreferences.trim();
     if (trimmedPreferences.length < 10) {
-      setError("Tell us a bit more about your style (at least 10 characters).");
+      setError(copy.errors.preferencesShort);
       return;
     }
 
     if (!monetaryBaseline) {
-      setError("Please provide your monetary range before continuing.");
+      setError(copy.errors.monetaryMissing);
       setStepIndex(0);
       return;
     }
@@ -211,10 +340,10 @@ export default function OnboardingPage() {
         return (
           <div className="flex w-full flex-col items-center justify-center gap-6 text-center">
             <h1 className="max-w-xl text-2xl font-semibold text-[#573ccb] md:text-3xl">
-              Let’s tailor your experience.
+              {copy.steps.intro.title}
             </h1>
             <p className="text-base text-slate-600">
-              Answer a few quick questions so your AI agent can represent you perfectly.
+              {copy.steps.intro.description}
             </p>
           </div>
         );
@@ -222,26 +351,26 @@ export default function OnboardingPage() {
         return (
           <div className="flex w-full flex-col items-center gap-6 text-center">
             <h1 className="max-w-xl text-2xl font-semibold text-[#573ccb] md:text-3xl">
-              What’s your monetary incentive range{" "}
-              <span className="text-[#6d28d9]">(lowest-highest)</span>?
+              {copy.steps.monetary.title}{" "}
+              <span className="text-[#6d28d9]">{copy.steps.monetary.highlight}</span>
             </h1>
             <p className="text-base text-slate-600">
-              Help brands understand the budget you typically work within.
+              {copy.steps.monetary.description}
             </p>
             <div className="w-full max-w-md space-y-3">
               <input
                 type="text"
                 value={monetaryInput}
                 onChange={(event) => setMonetaryInput(event.target.value)}
-                placeholder="e.g. $100 - $1000"
+                placeholder={copy.steps.monetary.placeholder}
                 className="w-full rounded-full border border-transparent bg-white/90 px-6 py-3 text-center text-lg text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
               />
               <p className="text-sm text-slate-500">
-                We’ll set your baseline to the lowest value you provide:{" "}
+                {copy.steps.monetary.baselinePrefix}{" "}
                 <span className="font-semibold text-[#6d28d9]">
-                  {parsedBaselinePreview ?? "…"}
+                  {parsedBaselinePreview ?? copy.baselineFallback}
                 </span>{" "}
-                from this range.
+                {copy.steps.monetary.baselineSuffix}
               </p>
             </div>
           </div>
@@ -251,14 +380,14 @@ export default function OnboardingPage() {
           <div className="flex w-full flex-col items-center gap-8 text-center">
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold text-[#573ccb] md:text-3xl">
-                How long is the content you prefer to create?
+                {copy.steps.contentLength.title}
               </h2>
               <p className="text-base text-slate-600">
-                Pick the format that best reflects your usual collaborations.
+                {copy.steps.contentLength.description}
               </p>
             </div>
             <div className="grid w-full gap-4 px-4 md:grid-cols-2">
-              {contentLengthOptions.map((option) => {
+              {localizedContentLengthOptions.map((option) => {
                 const selected = contentLength === option.value;
                 return (
                   <button
@@ -289,29 +418,28 @@ export default function OnboardingPage() {
           <div className="flex w-full flex-col items-center gap-6 text-center">
             <div className="space-y-2">
               <h2 className="text-2xl font-semibold text-[#573ccb] md:text-3xl">
-                Share your content style and guidelines
+                {copy.steps.preferences.title}
               </h2>
               <p className="text-base text-slate-600">
-                Tell us what resonates with you and any guardrails brands should
-                know.
+                {copy.steps.preferences.description}
               </p>
             </div>
             <div className="w-full max-w-lg space-y-5 text-left">
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#573ccb]">
-                  Personal content preferences
+                  {copy.steps.preferences.labels.personal}
                 </label>
                 <textarea
                   value={personalPreferences}
                   onChange={(event) => setPersonalPreferences(event.target.value)}
                   rows={2}
                   className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
-                  placeholder="Themes you love, brand values you align with, or types of stories you share."
+                  placeholder={copy.steps.preferences.placeholders.personal}
                 />
               </div>
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#573ccb]">
-                  Additional guidelines (optional)
+                  {copy.steps.preferences.labels.additional}
                 </label>
                 <textarea
                   value={additionalGuidelines}
@@ -320,7 +448,7 @@ export default function OnboardingPage() {
                   }
                   rows={1}
                   className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
-                  placeholder="Any do’s and don’ts, collaboration preferences, or timelines."
+                  placeholder={copy.steps.preferences.placeholders.additional}
                 />
               </div>
             </div>
@@ -351,7 +479,7 @@ export default function OnboardingPage() {
           style={continueButtonStyle}
         >
           <span className="sr-only">
-            {savePreferences.isPending ? "Saving..." : "Continue"}
+            {savePreferences.isPending ? copy.buttons.saving : copy.buttons.continue}
           </span>
         </button>
 

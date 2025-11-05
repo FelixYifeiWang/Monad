@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { initAuth } from '../../_lib/middleware.js';
 import { storage } from '../../_lib/storage.js';
-import { generateRecommendation } from '../../_lib/aiAgent.js';
+import { generateRecommendation, type SupportedLanguage } from '../../_lib/aiAgent.js';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -12,6 +12,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const { id } = req.query;
+    const rawLanguage = typeof req.body?.language === 'string' ? req.body.language : undefined;
+    const language: SupportedLanguage = rawLanguage === 'zh' ? 'zh' : 'en';
 
     console.log('🔒 Closing chat for inquiry:', id);
 
@@ -59,7 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         price: inquiry.price,
         companyInfo: inquiry.companyInfo,
       },
-      preferences
+      preferences,
+      language
     );
 
     // Close chat and save recommendation
