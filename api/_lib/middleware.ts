@@ -73,7 +73,7 @@ export function configurePassport() {
             : existingUser?.languagePreference === 'en'
               ? 'en'
               : undefined;
-          const resolvedLanguage: SupportedLanguage = preferredLanguageFromCookie || existingLanguage || 'en';
+          const resolvedLanguage: SupportedLanguage = existingLanguage || preferredLanguageFromCookie || 'en';
 
           await storage.upsertUser({
             id: profile.id,
