@@ -21,12 +21,30 @@ async function handleGet(req: VercelRequest, res: VercelResponse) {
 
 async function handlePost(req: VercelRequest, res: VercelResponse) {
   try {
+    const rawBody = (req.body ?? {}) as Record<string, unknown>;
+    const rawLanguage = typeof rawBody.language === 'string' ? rawBody.language : undefined;
+    const language = rawLanguage === 'zh' ? 'zh' : 'en';
+
+    const {
+      language: _ignoredLanguage,
+      price: rawPrice,
+      attachmentUrl: rawAttachmentUrl,
+      ...rest
+    } = rawBody;
+
+    const parsedPrice =
+      typeof rawPrice === 'string'
+        ? Number.parseInt(rawPrice, 10)
+        : typeof rawPrice === 'number'
+          ? rawPrice
+          : undefined;
+
     // Parse body
     const body = {
-      ...req.body,
-      price: req.body.price ? parseInt(req.body.price) : undefined,
+      ...rest,
+      price: Number.isFinite(parsedPrice as number) ? (parsedPrice as number) : undefined,
       // Note: File uploads will need special handling with Vercel Blob
-      attachmentUrl: req.body.attachmentUrl || undefined,
+      attachmentUrl: typeof rawAttachmentUrl === 'string' ? rawAttachmentUrl : undefined,
     };
 
     const validation = insertInquirySchema.safeParse(body);
@@ -61,7 +79,8 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
         price: validation.data.price,
         companyInfo: validation.data.companyInfo,
       },
-      preferences
+      preferences,
+      language
     );
 
     await storage.updateInquiryStatus(inquiry.id, 'pending', aiResponse);

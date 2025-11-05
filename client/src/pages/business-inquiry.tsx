@@ -220,6 +220,7 @@ export default function BusinessInquiry() {
         message: data.message,
         price: data.price,
         companyInfo: data.companyInfo,
+        language,
         // File uploads disabled for now - will add with Vercel Blob later
       };
 

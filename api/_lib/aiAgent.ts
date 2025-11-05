@@ -5,6 +5,27 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+type SupportedLanguage = "en" | "zh";
+
+const LANGUAGE_DIRECTIVES: Record<SupportedLanguage, string> = {
+  en: "Respond in natural, conversational English. Avoid other languages unless you are quoting the business.",
+  zh: "请使用自然、专业的简体中文回复，除非引用品牌方的原话，请不要使用英文。",
+};
+
+const FALLBACK_INQUIRY_RESPONSE: Record<SupportedLanguage, string> = {
+  en: "Thanks for reaching out! What's your budget for this and what's the timeline?",
+  zh: "感谢联系！可以告知一下预算和预计的时间安排吗？",
+};
+
+const FALLBACK_CHAT_RESPONSE: Record<SupportedLanguage, string> = {
+  en: "Could you elaborate on that?",
+  zh: "可以再详细说明一下吗？",
+};
+
+function getLanguageInstruction(language: SupportedLanguage) {
+  return LANGUAGE_DIRECTIVES[language] ?? LANGUAGE_DIRECTIVES.en;
+}
+
 export async function generateInquiryResponse(
   inquiry: {
     businessEmail: string;
@@ -12,9 +33,14 @@ export async function generateInquiryResponse(
     price?: number | null;
     companyInfo?: string | null;
   },
-  preferences: InfluencerPreferences
+  preferences: InfluencerPreferences,
+  language: SupportedLanguage = "en"
 ): Promise<string> {
+  const languageInstruction = getLanguageInstruction(language);
   const systemPrompt = `You are an AI agent representing an influencer in a business collaboration negotiation. This is a CHAT conversation - write like you're texting, not sending emails.
+
+LANGUAGE REQUIREMENT:
+${languageInstruction}
 
 Influencer's Preferences:
 - Content Preferences: ${preferences.personalContentPreferences}
@@ -87,10 +113,10 @@ Generate your first response to start the conversation and negotiation.`;
       max_tokens: 500,
     });
 
-    return completion.choices[0]?.message?.content || "Thanks for reaching out! What's your budget for this and what's the timeline?";
+    return completion.choices[0]?.message?.content || FALLBACK_INQUIRY_RESPONSE[language];
   } catch (error) {
     console.error("Error generating AI response:", error);
-    return "Interested! Can you share more about the timeline, deliverables, and budget you have in mind?";
+    return FALLBACK_INQUIRY_RESPONSE[language];
   }
 }
 
@@ -102,9 +128,14 @@ export async function generateChatResponse(
     price?: number | null;
     companyInfo?: string | null;
   },
-  preferences: InfluencerPreferences
+  preferences: InfluencerPreferences,
+  language: SupportedLanguage = "en"
 ): Promise<string> {
+  const languageInstruction = getLanguageInstruction(language);
   const systemPrompt = `You are an AI agent representing an influencer in a collaboration negotiation. This is a CHAT - write like you're messaging, not emailing.
+
+LANGUAGE REQUIREMENT:
+${languageInstruction}
 
 Influencer's Preferences:
 - Content Preferences: ${preferences.personalContentPreferences}
@@ -157,6 +188,7 @@ ${inquiry.companyInfo ? `Company: ${inquiry.companyInfo}` : ''}
 ${inquiry.price ? `Offered Budget: $${inquiry.price}` : 'Budget: Not specified'}
 Message: ${inquiry.message}`,
     },
+    { role: "system", content: `Remember: ${languageInstruction}` },
   ];
 
   // Add conversation history
@@ -177,10 +209,10 @@ Message: ${inquiry.message}`,
       max_tokens: 300,
     });
 
-    return completion.choices[0]?.message?.content || "Can you provide more details on that?";
+    return completion.choices[0]?.message?.content || FALLBACK_CHAT_RESPONSE[language];
   } catch (error) {
     console.error("Error generating chat response:", error);
-    return "Could you elaborate on that?";
+    return FALLBACK_CHAT_RESPONSE[language];
   }
 }
 

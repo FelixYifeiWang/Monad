@@ -22,6 +22,8 @@ async function handleGet(req: VercelRequest, res: VercelResponse) {
 async function handlePost(req: VercelRequest, res: VercelResponse) {
   try {
     const { id } = req.query;
+    const rawLanguage = typeof req.body?.language === 'string' ? req.body.language : undefined;
+    const language = rawLanguage === 'zh' ? 'zh' : 'en';
     const { content } = req.body;
 
     if (!id || typeof id !== 'string') {
@@ -77,7 +79,8 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
         price: inquiry.price,
         companyInfo: inquiry.companyInfo,
       },
-      preferences
+      preferences,
+      language
     );
 
     // Add AI response
