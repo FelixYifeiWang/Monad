@@ -26,7 +26,7 @@ let isPassportConfigured = false;
 export function configurePassport() {
   if (isPassportConfigured) return;
 
-  const baseUrl = process.env.VERCEL_URL
+  const baseUrl = process.env.PUBLIC_BASE_URL
     ? `https://${process.env.VERCEL_URL}`
     : 'http://localhost:5000';
 
