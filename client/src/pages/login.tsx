@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Chrome, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import LanguageToggle from "@/components/language-toggle";
 
 // Add this type definition
 type AuthStatus = {
@@ -22,7 +23,10 @@ export default function LoginPage() {
   const isConfigured = authStatus?.configured ?? true;
 
   return (
-  <div className="flex h-screen overflow-hidden">
+  <div className="relative flex h-screen overflow-hidden">
+    <div className="absolute right-6 top-6 z-10">
+      <LanguageToggle />
+    </div>
     {/* Left side - Image */}
     <div className="hidden lg:flex lg:w-1/2 relative">
       <img 
