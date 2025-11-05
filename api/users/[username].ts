@@ -26,6 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       firstName: user.firstName,
       lastName: user.lastName,
       profileImageUrl: user.profileImageUrl,
+      languagePreference: user.languagePreference,
     });
   } catch (error) {
     console.error('Error fetching user by username:', error);

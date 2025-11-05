@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,21 +12,150 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Building2, CheckCircle2, Upload, X } from "lucide-react";
 import { z } from "zod";
+import { useLanguage } from "@/providers/language-provider";
 
-const inquirySchema = z.object({
-  influencerId: z.string().min(1, "Influencer ID is required"),
-  businessEmail: z.string().email("Please enter a valid email"),
-  message: z.string().min(20, "Please provide more details about your inquiry"),
-  price: z.coerce.number().optional(),
-  companyInfo: z.string().optional(),
-});
+const translations = {
+  en: {
+    loading: "Loading...",
+    fetchError: "Influencer not found",
+    notFound: {
+      title: "Influencer Not Found",
+      description: "The influencer you're looking for doesn't exist or hasn't set up their profile yet.",
+    },
+    submitted: {
+      title: "Inquiry Submitted!",
+      aiResponse: (name: string) => `AI Response from ${name}`,
+      button: "Submit Another Inquiry",
+    },
+    toast: {
+      successTitle: "Inquiry submitted",
+      successDescription: "Redirecting to chat with the AI agent...",
+      errorTitle: "Error",
+      errorDescription: "Failed to submit inquiry. Please try again.",
+    },
+    form: {
+      heading: {
+        title: "Business Inquiry",
+        description: "Submit your collaboration proposal",
+      },
+      fields: {
+        businessEmail: {
+          label: "Business Email *",
+          placeholder: "contact@company.com",
+        },
+        message: {
+          label: "Message *",
+          placeholder:
+            "Describe your collaboration proposal, campaign details, timeline, and any specific requirements...",
+        },
+        price: {
+          label: "Budget / Offer ($)",
+          placeholder: "5000",
+        },
+        companyInfo: {
+          label: "Company Info",
+          placeholder: "Tell us about your company, products, or services...",
+        },
+      },
+      attachment: {
+        label: "Attachment (Optional)",
+        instructions: "Click to upload or drag and drop",
+        formats: "PDF, DOC, DOCX, TXT, PNG, JPG, GIF (max 10MB)",
+        remove: "Remove file",
+      },
+      buttons: {
+        submit: "Submit Inquiry",
+        submitting: "Submitting...",
+        reset: "Reset",
+      },
+    },
+    validation: {
+      influencerId: "Influencer ID is required",
+      businessEmail: "Please enter a valid email",
+      message: "Please provide more details about your inquiry (at least 20 characters)",
+    },
+  },
+  zh: {
+    loading: "加载中…",
+    fetchError: "找不到该创作者",
+    notFound: {
+      title: "未找到创作者",
+      description: "该创作者不存在或尚未完成资料设置。",
+    },
+    submitted: {
+      title: "提交成功！",
+      aiResponse: (name: string) => `来自 ${name} 的 AI 回复`,
+      button: "再提交一个询问",
+    },
+    toast: {
+      successTitle: "询问已提交",
+      successDescription: "正在跳转到与你的 AI 代理的对话…",
+      errorTitle: "错误",
+      errorDescription: "提交失败，请稍后再试。",
+    },
+    form: {
+      heading: {
+        title: "商务合作询问",
+        description: "提交你的合作提案",
+      },
+      fields: {
+        businessEmail: {
+          label: "商务邮箱 *",
+          placeholder: "contact@company.com",
+        },
+        message: {
+          label: "留言内容 *",
+          placeholder: "请描述你的合作提案、活动细节、时间规划以及具体需求…",
+        },
+        price: {
+          label: "预算 / 报价（美元）",
+          placeholder: "5000",
+        },
+        companyInfo: {
+          label: "公司信息",
+          placeholder: "介绍一下你的公司、产品或服务…",
+        },
+      },
+      attachment: {
+        label: "附件（可选）",
+        instructions: "点击上传或拖拽文件到此处",
+        formats: "支持 PDF、DOC、DOCX、TXT、PNG、JPG、GIF（最大 10MB）",
+        remove: "移除附件",
+      },
+      buttons: {
+        submit: "提交询问",
+        submitting: "提交中…",
+        reset: "重置",
+      },
+    },
+    validation: {
+      influencerId: "创作者信息缺失",
+      businessEmail: "请输入有效的邮箱地址",
+      message: "请详细描述你的询问（至少 20 个字符）",
+    },
+  },
+} as const;
 
-type InquiryFormData = z.infer<typeof inquirySchema>;
+type InquiryCopy = (typeof translations)[keyof typeof translations];
+
+const createInquirySchema = (validation: InquiryCopy["validation"]) =>
+  z.object({
+    influencerId: z.string().min(1, validation.influencerId),
+    businessEmail: z.string().email(validation.businessEmail),
+    message: z.string().min(20, validation.message),
+    price: z.coerce.number().optional(),
+    companyInfo: z.string().optional(),
+  });
+
+type InquiryFormData = z.infer<ReturnType<typeof createInquirySchema>>;
 
 export default function BusinessInquiry() {
   const { username } = useParams<{ username: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { language } = useLanguage();
+  const copy = useMemo(() => translations[language], [language]);
+  const inquirySchema = useMemo(() => createInquirySchema(copy.validation), [copy]);
   const [submitted, setSubmitted] = useState(false);
   const [aiResponse, setAiResponse] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -42,7 +171,7 @@ export default function BusinessInquiry() {
     queryFn: async () => {
       const response = await fetch(`/api/users/${username}`);
       if (!response.ok) {
-        throw new Error("Influencer not found");
+        throw new Error(copy.fetchError);
       }
       return response.json();
     },
@@ -50,15 +179,20 @@ export default function BusinessInquiry() {
     retry: false,
   });
 
-  const form = useForm<InquiryFormData>({
-    resolver: zodResolver(inquirySchema),
-    defaultValues: {
+  const defaultValues = useMemo<InquiryFormData>(
+    () => ({
       influencerId: "",
       businessEmail: "",
       message: "",
       price: undefined,
       companyInfo: "",
-    },
+    }),
+    [],
+  );
+
+  const form = useForm<InquiryFormData>({
+    resolver: zodResolver(inquirySchema),
+    defaultValues,
   });
 
   useEffect(() => {
@@ -97,14 +231,14 @@ export default function BusinessInquiry() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to submit inquiry");
+        throw new Error(errorData.message || copy.toast.errorDescription);
       }
       return response.json();
     },
     onSuccess: (data) => {
       toast({
-        title: "Inquiry submitted",
-        description: "Redirecting to chat with the AI agent...",
+        title: copy.toast.successTitle,
+        description: copy.toast.successDescription,
       });
       // Redirect to chat page
       setTimeout(() => {
@@ -113,8 +247,8 @@ export default function BusinessInquiry() {
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error.message || "Failed to submit inquiry. Please try again.",
+        title: copy.toast.errorTitle,
+        description: error.message || copy.toast.errorDescription,
         variant: "destructive",
       });
     },
@@ -123,7 +257,7 @@ export default function BusinessInquiry() {
   if (loadingInfluencer) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{copy.loading}</div>
       </div>
     );
   }
@@ -133,10 +267,8 @@ export default function BusinessInquiry() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>Influencer Not Found</CardTitle>
-            <CardDescription>
-              The influencer you're looking for doesn't exist or hasn't set up their profile yet.
-            </CardDescription>
+            <CardTitle>{copy.notFound.title}</CardTitle>
+            <CardDescription>{copy.notFound.description}</CardDescription>
           </CardHeader>
         </Card>
       </div>
@@ -163,9 +295,9 @@ export default function BusinessInquiry() {
                   <CheckCircle2 className="h-8 w-8 text-primary" />
                 </div>
               </div>
-              <CardTitle className="text-2xl">Inquiry Submitted!</CardTitle>
+              <CardTitle className="text-2xl">{copy.submitted.title}</CardTitle>
               <CardDescription className="text-base pt-2">
-                AI Response from {influencer.firstName || influencer.username}
+                {copy.submitted.aiResponse(influencer.firstName || influencer.username)}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -180,16 +312,13 @@ export default function BusinessInquiry() {
                     setAiResponse("");
                     setSelectedFile(null);
                     form.reset({
+                      ...defaultValues,
                       influencerId: influencer.id,
-                      businessEmail: "",
-                      message: "",
-                      price: undefined,
-                      companyInfo: "",
                     });
                   }}
                   data-testid="button-submit-another"
                 >
-                  Submit Another Inquiry
+                  {copy.submitted.button}
                 </Button>
               </div>
             </CardContent>
@@ -232,11 +361,9 @@ export default function BusinessInquiry() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Building2 className="h-6 w-6 text-primary" />
-              <CardTitle className="text-2xl">Business Inquiry</CardTitle>
+              <CardTitle className="text-2xl">{copy.form.heading.title}</CardTitle>
             </div>
-            <CardDescription className="text-base">
-              Submit your collaboration proposal
-            </CardDescription>
+            <CardDescription className="text-base">{copy.form.heading.description}</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -246,11 +373,11 @@ export default function BusinessInquiry() {
                   name="businessEmail"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Business Email *</FormLabel>
+                      <FormLabel>{copy.form.fields.businessEmail.label}</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
-                          placeholder="contact@company.com"
+                          placeholder={copy.form.fields.businessEmail.placeholder}
                           {...field}
                           data-testid="input-business-email"
                         />
@@ -265,10 +392,10 @@ export default function BusinessInquiry() {
                   name="message"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Message *</FormLabel>
+                      <FormLabel>{copy.form.fields.message.label}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe your collaboration proposal, campaign details, timeline, and any specific requirements..."
+                          placeholder={copy.form.fields.message.placeholder}
                           className="min-h-40 resize-none"
                           {...field}
                           data-testid="input-message"
@@ -284,11 +411,11 @@ export default function BusinessInquiry() {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Budget / Offer ($)</FormLabel>
+                      <FormLabel>{copy.form.fields.price.label}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="5000"
+                          placeholder={copy.form.fields.price.placeholder}
                           {...field}
                           data-testid="input-price"
                         />
@@ -303,10 +430,10 @@ export default function BusinessInquiry() {
                   name="companyInfo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Company Info</FormLabel>
+                      <FormLabel>{copy.form.fields.companyInfo.label}</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Tell us about your company, products, or services..."
+                          placeholder={copy.form.fields.companyInfo.placeholder}
                           className="min-h-24 resize-none"
                           {...field}
                           data-testid="input-company-info"
@@ -318,7 +445,7 @@ export default function BusinessInquiry() {
                 />
 
                 <div>
-                  <FormLabel>Attachment (Optional)</FormLabel>
+                  <FormLabel>{copy.form.attachment.label}</FormLabel>
                   <div className="mt-2">
                     {selectedFile ? (
                       <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
@@ -329,6 +456,7 @@ export default function BusinessInquiry() {
                           size="sm"
                           onClick={removeFile}
                           data-testid="button-remove-file"
+                          aria-label={copy.form.attachment.remove}
                         >
                           <X className="h-4 w-4" />
                         </Button>
@@ -338,10 +466,10 @@ export default function BusinessInquiry() {
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <Upload className="h-8 w-8 text-muted-foreground mb-2" />
                           <p className="text-sm text-muted-foreground">
-                            Click to upload or drag and drop
+                            {copy.form.attachment.instructions}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            PDF, DOC, DOCX, TXT, PNG, JPG, GIF (max 10MB)
+                            {copy.form.attachment.formats}
                           </p>
                         </div>
                         <input
@@ -362,25 +490,24 @@ export default function BusinessInquiry() {
                     disabled={submitMutation.isPending || !influencer?.id}
                     data-testid="button-submit-inquiry"
                   >
-                    {submitMutation.isPending ? "Submitting..." : "Submit Inquiry"}
+                    {submitMutation.isPending
+                      ? copy.form.buttons.submitting
+                      : copy.form.buttons.submit}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => {
                       form.reset({
+                        ...defaultValues,
                         influencerId: influencer.id,
-                        businessEmail: "",
-                        message: "",
-                        price: undefined,
-                        companyInfo: "",
                       });
                       setSelectedFile(null);
                     }}
                     disabled={submitMutation.isPending}
                     data-testid="button-reset-form"
                   >
-                    Reset
+                    {copy.form.buttons.reset}
                   </Button>
                 </div>
               </form>
