@@ -16,6 +16,7 @@ import { LogOut, Mail, DollarSign, Building2, CheckCircle, XCircle, Clock, Copy,
 import { Link } from "wouter";
 import type { Inquiry, Message } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
+import LanguageToggle from "@/components/language-toggle";
 
 function AIRecommendation({ recommendation }: { recommendation: string }) {
   // Parse the recommendation to extract decision and content
@@ -328,14 +329,17 @@ export default function InfluencerDashboard() {
               </Button>
             </Link>
             <div className="text-sm text-muted-foreground">{(user as any)?.email}</div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              data-testid="button-logout"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <LanguageToggle className="h-9" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                data-testid="button-logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>

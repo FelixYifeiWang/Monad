@@ -12,9 +12,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LogOut, Sparkles, Link as LinkIcon, Copy, CheckCircle } from "lucide-react";
+import { LogOut, Sparkles, Link as LinkIcon, Copy, CheckCircle, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import type { InfluencerPreferences } from "@shared/schema";
+import { Link } from "wouter";
+import LanguageToggle from "@/components/language-toggle";
 
 const preferencesSchema = z.object({
   personalContentPreferences: z.string().min(10, "Please provide more details about your content preferences"),
@@ -215,20 +217,31 @@ I will not promote:
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="text-2xl font-bold tracking-tight">
-            <span className="text-primary">Peri.</span>
-            <span className="text-foreground">ai</span>
+          <div className="flex items-center gap-4">
+            <div className="text-2xl font-bold tracking-tight">
+              <span className="text-primary">Peri.</span>
+              <span className="text-foreground">ai</span>
+            </div>
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="gap-2" data-testid="button-back-to-dashboard">
+                <ArrowLeft className="h-4 w-4" />
+                Dashboard
+              </Button>
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-sm text-muted-foreground">{(user as any)?.email}</div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              data-testid="button-logout"
-            >
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <LanguageToggle className="h-9" />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                data-testid="button-logout"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
