@@ -26,9 +26,8 @@ let isPassportConfigured = false;
 export function configurePassport() {
   if (isPassportConfigured) return;
 
-  const baseUrl = process.env.PUBLIC_BASE_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:5000';
+  const baseUrl = process.env.PUBLIC_BASE_URL // e.g. https://www.peri-ai.com  (no trailing slash)
+  ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5000');
 
   console.log('🔧 Passport callback URL:', `${baseUrl}/api/auth/google/callback`);
 
