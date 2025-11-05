@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { Toggle } from "@/components/ui/toggle";
 
 type SupportedLanguage = "en" | "zh";
 
@@ -72,18 +72,25 @@ export function LanguageToggle() {
   }
 
   return (
-    <div className="fixed right-4 top-4 z-50">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleToggle}
-        disabled={!isAuthenticated || mutation.isPending}
-        className="min-w-[140px] justify-between"
+    <div className="fixed right-6 top-6 z-40">
+      <Toggle
+        pressed={localLanguage === "zh"}
+        onPressedChange={handleToggle}
+        disabled={mutation.isPending}
+        aria-label="Toggle language"
+        className="rounded-full border bg-background px-3 py-1 text-xs font-medium shadow-sm"
         data-testid="button-language-toggle"
       >
-        <span>{languageLabels[localLanguage]}</span>
-        <span className="text-muted-foreground">/ {languageLabels[nextLanguage]}</span>
-      </Button>
+        <span className="flex items-center gap-1">
+          <span className={localLanguage === "en" ? "text-primary" : "text-muted-foreground"}>
+            EN
+          </span>
+          <span className="text-muted-foreground">/</span>
+          <span className={localLanguage === "zh" ? "text-primary" : "text-muted-foreground"}>
+            中文
+          </span>
+        </span>
+      </Toggle>
     </div>
   );
 }
