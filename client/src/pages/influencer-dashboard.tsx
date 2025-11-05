@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -17,44 +17,286 @@ import { Link } from "wouter";
 import type { Inquiry, Message } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import LanguageToggle from "@/components/language-toggle";
+import { useLanguage } from "@/providers/language-provider";
 
-function AIRecommendation({ recommendation }: { recommendation: string }) {
+const translations = {
+  en: {
+    loading: "Loading...",
+    header: {
+      settings: "Settings",
+    },
+    toast: {
+      unauthorized: {
+        title: "Unauthorized",
+        description: "You are logged out. Logging in again...",
+      },
+      statusUpdated: {
+        title: "Status updated",
+        description: "The inquiry status has been updated and the business has been notified.",
+      },
+      statusError: {
+        title: "Error",
+        description: "Failed to update status. Please try again.",
+      },
+      deleteSuccess: {
+        title: "Deleted",
+        description: "The inquiry has been deleted.",
+      },
+      deleteError: {
+        title: "Error",
+        description: "Failed to delete inquiry. Please try again.",
+      },
+      copySuccess: {
+        title: "Copied!",
+        description: "Your public URL has been copied to clipboard.",
+      },
+    },
+    publicForm: {
+      title: "Your Public Inquiry Form",
+    },
+    copyButton: {
+      default: "Copy",
+      copied: "Copied!",
+    },
+    usernameSetup: {
+      link: "Set up your username",
+      afterLink: " to create a public inquiry form that businesses can use to contact you.",
+    },
+    section: {
+      title: "Business Inquiries",
+      subtitle: "Manage collaboration requests processed by your AI agent",
+    },
+    tabs: {
+      all: (count: number) => `All (${count})`,
+      pending: (count: number) => `Pending (${count})`,
+      approved: (count: number) => `Approved (${count})`,
+      rejected: (count: number) => `Rejected (${count})`,
+    },
+    emptyState: {
+      title: "No inquiries yet",
+      description:
+        "When businesses submit collaboration requests, they'll appear here with AI-generated responses.",
+    },
+    inquiryCard: {
+      businessMessage: "Business Message:",
+      viewAttachment: "View Attachment",
+      activeChat: {
+        title: "Active Chat Conversation",
+        description:
+          "The business is currently chatting with your AI agent to discuss details and negotiate terms.",
+      },
+    },
+    aiRecommendation: {
+      title: "AI Recommendation",
+      badges: {
+        APPROVE: "✓ APPROVE",
+        REJECT: "✗ REJECT",
+        "NEEDS INFO": "? NEEDS INFO",
+      } as Record<string, string>,
+    },
+    chatHistory: {
+      trigger: "View Chat History",
+      loading: "Loading chat history...",
+      empty: "No messages yet",
+      labels: {
+        business: "Business",
+        agent: "AI Agent",
+      },
+    },
+    statusBadge: {
+      approved: "Approved",
+      rejected: "Rejected",
+      pending: "Pending",
+      needsInfo: "Needs Info",
+    },
+    buttons: {
+      approve: "Approve",
+      needsInfo: "Needs Info",
+      reject: "Reject",
+      markPending: "Mark Pending",
+      delete: "Delete",
+    },
+    dialog: {
+      title: {
+        approved: "Approve Inquiry",
+        rejected: "Reject Inquiry",
+        needs_info: "Request More Information",
+      } as Record<string, string>,
+      description: {
+        approved:
+          "Add an optional message to send with your approval (e.g., next steps, contact details).",
+        rejected:
+          "Add an optional message to explain why you're declining (e.g., doesn't align with brand values).",
+        needs_info: "Add a message explaining what additional information you need.",
+      } as Record<string, string>,
+      placeholder: "Your message to the business (optional)",
+      cancel: "Cancel",
+      confirm: "Confirm",
+      updating: "Updating...",
+    },
+  },
+  zh: {
+    loading: "加载中…",
+    header: {
+      settings: "设置",
+    },
+    toast: {
+      unauthorized: {
+        title: "未授权",
+        description: "你已退出登录，正在重新跳转…",
+      },
+      statusUpdated: {
+        title: "状态已更新",
+        description: "询问状态已更新，我们已通知品牌方。",
+      },
+      statusError: {
+        title: "错误",
+        description: "更新状态失败，请稍后再试。",
+      },
+      deleteSuccess: {
+        title: "已删除",
+        description: "该询问已被删除。",
+      },
+      deleteError: {
+        title: "错误",
+        description: "删除询问失败，请稍后再试。",
+      },
+      copySuccess: {
+        title: "已复制",
+        description: "你的公开链接已复制到剪贴板。",
+      },
+    },
+    publicForm: {
+      title: "你的公开询问表单",
+    },
+    copyButton: {
+      default: "复制",
+      copied: "已复制",
+    },
+    usernameSetup: {
+      link: "设置你的用户名",
+      afterLink: "，以便创建一个供品牌方联系你的公开表单。",
+    },
+    section: {
+      title: "商务询问",
+      subtitle: "管理由你的 AI 代理处理的合作请求",
+    },
+    tabs: {
+      all: (count: number) => `全部（${count}）`,
+      pending: (count: number) => `待处理（${count}）`,
+      approved: (count: number) => `已通过（${count}）`,
+      rejected: (count: number) => `已拒绝（${count}）`,
+    },
+    emptyState: {
+      title: "暂无询问",
+      description: "当品牌提交合作请求时，它们会出现在这里，并附带 AI 自动生成的回复。",
+    },
+    inquiryCard: {
+      businessMessage: "品牌留言：",
+      viewAttachment: "查看附件",
+      activeChat: {
+        title: "聊天进行中",
+        description: "品牌正在与你的 AI 代理沟通，以讨论细节并协商条款。",
+      },
+    },
+    aiRecommendation: {
+      title: "AI 建议",
+      badges: {
+        APPROVE: "✓ 通过",
+        REJECT: "✗ 拒绝",
+        "NEEDS INFO": "? 需更多信息",
+      } as Record<string, string>,
+    },
+    chatHistory: {
+      trigger: "查看聊天记录",
+      loading: "正在加载聊天记录…",
+      empty: "暂时还没有消息",
+      labels: {
+        business: "品牌方",
+        agent: "AI 代理",
+      },
+    },
+    statusBadge: {
+      approved: "已通过",
+      rejected: "已拒绝",
+      pending: "待处理",
+      needsInfo: "需更多信息",
+    },
+    buttons: {
+      approve: "批准",
+      needsInfo: "需要信息",
+      reject: "拒绝",
+      markPending: "标记为待处理",
+      delete: "删除",
+    },
+    dialog: {
+      title: {
+        approved: "批准询问",
+        rejected: "拒绝询问",
+        needs_info: "请求更多信息",
+      } as Record<string, string>,
+      description: {
+        approved: "添加一条可选消息与批准一起发送（例如下一步、联系方式等）。",
+        rejected: "添加一条可选消息解释拒绝原因（例如与品牌调性不符）。",
+        needs_info: "添加一条消息说明你需要的额外信息。",
+      } as Record<string, string>,
+      placeholder: "给品牌方的留言（可选）",
+      cancel: "取消",
+      confirm: "确认",
+      updating: "正在更新…",
+    },
+  },
+} as const;
+
+type DashboardCopy = (typeof translations)[keyof typeof translations];
+type DecisionBadgeKey = keyof DashboardCopy["aiRecommendation"]["badges"];
+
+function AIRecommendation({
+  recommendation,
+  copy,
+}: {
+  recommendation: string;
+  copy: DashboardCopy["aiRecommendation"];
+}) {
   // Parse the recommendation to extract decision and content
-  const lines = recommendation.split('\n');
-  let decision = '';
-  let content = '';
-  
+  const lines = recommendation.split("\n");
+  let decision = "";
+  let content = "";
+
   // Extract decision (first line with APPROVE/REJECT/NEEDS INFO)
-  const decisionLine = lines[0]?.replace(/\*\*/g, '').trim();
-  if (decisionLine && (decisionLine === 'APPROVE' || decisionLine === 'REJECT' || decisionLine === 'NEEDS INFO')) {
+  const decisionLine = lines[0]?.replace(/\*\*/g, "").trim();
+  if (
+    decisionLine &&
+    (decisionLine === "APPROVE" || decisionLine === "REJECT" || decisionLine === "NEEDS INFO")
+  ) {
     decision = decisionLine;
-    content = lines.slice(1).join('\n').trim();
+    content = lines.slice(1).join("\n").trim();
   } else {
     // Fallback: try to find decision in the text
-    if (recommendation.includes('APPROVE')) decision = 'APPROVE';
-    else if (recommendation.includes('REJECT')) decision = 'REJECT';
-    else if (recommendation.includes('NEEDS INFO')) decision = 'NEEDS INFO';
-    content = recommendation.replace(/\*\*/g, '');
+    if (recommendation.includes("APPROVE")) decision = "APPROVE";
+    else if (recommendation.includes("REJECT")) decision = "REJECT";
+    else if (recommendation.includes("NEEDS INFO")) decision = "NEEDS INFO";
+    content = recommendation.replace(/\*\*/g, "");
   }
 
   const getDecisionBadge = (decision: string) => {
     switch (decision) {
-      case 'APPROVE':
+      case "APPROVE":
         return (
           <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20 text-base px-3 py-1">
-            ✓ APPROVE
+            {copy.badges[decision as DecisionBadgeKey] ?? copy.badges.APPROVE}
           </Badge>
         );
-      case 'REJECT':
+      case "REJECT":
         return (
           <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20 text-base px-3 py-1">
-            ✗ REJECT
+            {copy.badges[decision as DecisionBadgeKey] ?? copy.badges.REJECT}
           </Badge>
         );
-      case 'NEEDS INFO':
+      case "NEEDS INFO":
         return (
           <Badge className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20 text-base px-3 py-1">
-            ? NEEDS INFO
+            {copy.badges[decision as DecisionBadgeKey] ?? copy.badges["NEEDS INFO"]}
           </Badge>
         );
       default:
@@ -65,16 +307,14 @@ function AIRecommendation({ recommendation }: { recommendation: string }) {
   // Format content: replace **text** with bold
   const formatContent = (text: string) => {
     const parts = text.split(/\*\*(.+?)\*\*/g);
-    return parts.map((part, i) => 
-      i % 2 === 1 ? <strong key={i}>{part}</strong> : part
-    );
+    return parts.map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
   };
 
   return (
     <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
       <div className="flex items-center gap-3 mb-3">
         <Sparkles className="h-5 w-5 text-primary" />
-        <h4 className="font-semibold text-primary">AI Recommendation</h4>
+        <h4 className="font-semibold text-primary">{copy.title}</h4>
         {decision && getDecisionBadge(decision)}
       </div>
       <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
@@ -84,7 +324,13 @@ function AIRecommendation({ recommendation }: { recommendation: string }) {
   );
 }
 
-function ChatHistory({ inquiryId }: { inquiryId: string }) {
+function ChatHistory({
+  inquiryId,
+  copy,
+}: {
+  inquiryId: string;
+  copy: DashboardCopy["chatHistory"];
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const { data: messages = [], isLoading } = useQuery<Message[]>({
     queryKey: ["/api/inquiries", inquiryId, "messages"],
@@ -94,44 +340,42 @@ function ChatHistory({ inquiryId }: { inquiryId: string }) {
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <Button
+          variant="ghost"
+          size="sm"
           className="w-full justify-between"
           data-testid={`button-view-chat-${inquiryId}`}
         >
           <span className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
-            View Chat History
+            {copy.trigger}
           </span>
-          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
         </Button>
       </CollapsibleTrigger>
       <CollapsibleContent className="mt-2">
         {isLoading ? (
           <div className="text-sm text-muted-foreground p-4 text-center">
-            Loading chat history...
+            {copy.loading}
           </div>
         ) : messages.length === 0 ? (
           <div className="text-sm text-muted-foreground p-4 text-center">
-            No messages yet
+            {copy.empty}
           </div>
         ) : (
           <div className="bg-muted/30 rounded-lg p-4 border space-y-3 max-h-96 overflow-y-auto">
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted border'
+                    message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted border"
                   }`}
                 >
                   <div className="text-xs opacity-70 mb-1">
-                    {message.role === 'user' ? 'Business' : 'AI Agent'}
+                    {message.role === "user" ? copy.labels.business : copy.labels.agent}
                   </div>
                   <div className="whitespace-pre-wrap">{message.content}</div>
                 </div>
@@ -147,6 +391,8 @@ function ChatHistory({ inquiryId }: { inquiryId: string }) {
 export default function InfluencerDashboard() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { language } = useLanguage();
+  const copy = useMemo(() => translations[language], [language]);
   const [selectedTab, setSelectedTab] = useState("pending");
   const [isCopied, setIsCopied] = useState(false);
   const [openChatHistories, setOpenChatHistories] = useState<Record<string, boolean>>({});
@@ -157,8 +403,8 @@ export default function InfluencerDashboard() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
+        title: copy.toast.unauthorized.title,
+        description: copy.toast.unauthorized.description,
         variant: "destructive",
       });
       setTimeout(() => {
@@ -166,7 +412,7 @@ export default function InfluencerDashboard() {
       }, 500);
       return;
     }
-  }, [isAuthenticated, isLoading, toast]);
+  }, [isAuthenticated, isLoading, toast, copy]);
 
   const { data: inquiries = [], isLoading: inquiriesLoading } = useQuery<Inquiry[]>({
     queryKey: ["/api/inquiries"],
@@ -192,15 +438,15 @@ export default function InfluencerDashboard() {
       setStatusDialogData(null);
       setCustomMessage("");
       toast({
-        title: "Status updated",
-        description: "The inquiry status has been updated and the business has been notified.",
+        title: copy.toast.statusUpdated.title,
+        description: copy.toast.statusUpdated.description,
       });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: copy.toast.unauthorized.title,
+          description: copy.toast.unauthorized.description,
           variant: "destructive",
         });
         setTimeout(() => {
@@ -209,8 +455,8 @@ export default function InfluencerDashboard() {
         return;
       }
       toast({
-        title: "Error",
-        description: "Failed to update status. Please try again.",
+        title: copy.toast.statusError.title,
+        description: copy.toast.statusError.description,
         variant: "destructive",
       });
     },
@@ -230,15 +476,15 @@ export default function InfluencerDashboard() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/inquiries"] });
       toast({
-        title: "Deleted",
-        description: "The inquiry has been deleted.",
+        title: copy.toast.deleteSuccess.title,
+        description: copy.toast.deleteSuccess.description,
       });
     },
     onError: (error: Error) => {
       if (isUnauthorizedError(error)) {
         toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
+          title: copy.toast.unauthorized.title,
+          description: copy.toast.unauthorized.description,
           variant: "destructive",
         });
         setTimeout(() => {
@@ -247,8 +493,8 @@ export default function InfluencerDashboard() {
         return;
       }
       toast({
-        title: "Error",
-        description: "Failed to delete inquiry. Please try again.",
+        title: copy.toast.deleteError.title,
+        description: copy.toast.deleteError.description,
         variant: "destructive",
       });
     },
@@ -270,8 +516,8 @@ export default function InfluencerDashboard() {
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
     toast({
-      title: "Copied!",
-      description: "Your public URL has been copied to clipboard.",
+      title: copy.toast.copySuccess.title,
+      description: copy.toast.copySuccess.description,
     });
   };
 
@@ -298,18 +544,36 @@ export default function InfluencerDashboard() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">Approved</Badge>;
+        return (
+          <Badge className="bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">
+            {copy.statusBadge.approved}
+          </Badge>
+        );
       case "rejected":
-        return <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20">Rejected</Badge>;
+        return (
+          <Badge className="bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20">
+            {copy.statusBadge.rejected}
+          </Badge>
+        );
+      case "needs_info":
+        return (
+          <Badge className="bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20">
+            {copy.statusBadge.needsInfo}
+          </Badge>
+        );
       default:
-        return <Badge className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20">Pending</Badge>;
+        return (
+          <Badge className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-400 border-yellow-500/20">
+            {copy.statusBadge.pending}
+          </Badge>
+        );
     }
   };
 
   if (isLoading || inquiriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-muted-foreground">Loading...</div>
+        <div className="text-muted-foreground">{copy.loading}</div>
       </div>
     );
   }
@@ -325,7 +589,7 @@ export default function InfluencerDashboard() {
           <div className="flex items-center gap-4">
             <Link href="/setup">
               <Button variant="ghost" size="sm" data-testid="link-settings">
-                Settings
+                {copy.header.settings}
               </Button>
             </Link>
             <div className="text-sm text-muted-foreground">{(user as any)?.email}</div>
@@ -349,7 +613,7 @@ export default function InfluencerDashboard() {
           <Alert className="mb-8 bg-primary/5 border-primary/20">
             <AlertDescription className="flex items-center justify-between gap-4">
               <div className="flex-1">
-                <p className="text-sm font-medium mb-1">Your Public Inquiry Form</p>
+                <p className="text-sm font-medium mb-1">{copy.publicForm.title}</p>
                 <a
                   href={`${window.location.origin}/i/${(user as any)?.username}`}
                   target="_blank"
@@ -366,7 +630,14 @@ export default function InfluencerDashboard() {
                 onClick={copyPublicUrl}
                 data-testid="button-copy-url-dashboard"
               >
-                {isCopied ? "Copied!" : <><Copy className="h-4 w-4 mr-2" />Copy</>}
+                {isCopied ? (
+                  copy.copyButton.copied
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    {copy.copyButton.default}
+                  </>
+                )}
               </Button>
             </AlertDescription>
           </Alert>
@@ -376,33 +647,31 @@ export default function InfluencerDashboard() {
           <Alert className="mb-8">
             <AlertDescription>
               <Link href="/setup" className="text-primary hover:underline font-medium">
-                Set up your username
+                {copy.usernameSetup.link}
               </Link>
-              {" "}to create a public inquiry form that businesses can use to contact you.
+              {copy.usernameSetup.afterLink}
             </AlertDescription>
           </Alert>
         )}
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Business Inquiries</h1>
-          <p className="text-muted-foreground">
-            Manage collaboration requests processed by your AI agent
-          </p>
+          <h1 className="text-3xl font-bold mb-2">{copy.section.title}</h1>
+          <p className="text-muted-foreground">{copy.section.subtitle}</p>
         </div>
 
         <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mb-6">
           <TabsList>
             <TabsTrigger value="all" data-testid="tab-all">
-              All ({inquiries.length})
+              {copy.tabs.all(inquiries.length)}
             </TabsTrigger>
             <TabsTrigger value="pending" data-testid="tab-pending">
-              Pending ({inquiries.filter(i => i.status === "pending").length})
+              {copy.tabs.pending(inquiries.filter((i) => i.status === "pending").length)}
             </TabsTrigger>
             <TabsTrigger value="approved" data-testid="tab-approved">
-              Approved ({inquiries.filter(i => i.status === "approved").length})
+              {copy.tabs.approved(inquiries.filter((i) => i.status === "approved").length)}
             </TabsTrigger>
             <TabsTrigger value="rejected" data-testid="tab-rejected">
-              Rejected ({inquiries.filter(i => i.status === "rejected").length})
+              {copy.tabs.rejected(inquiries.filter((i) => i.status === "rejected").length)}
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -411,10 +680,8 @@ export default function InfluencerDashboard() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <Mail className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No inquiries yet</h3>
-              <p className="text-muted-foreground text-center max-w-md">
-                When businesses submit collaboration requests, they'll appear here with AI-generated responses.
-              </p>
+              <h3 className="text-lg font-semibold mb-2">{copy.emptyState.title}</h3>
+              <p className="text-muted-foreground text-center max-w-md">{copy.emptyState.description}</p>
             </CardContent>
           </Card>
         ) : (
@@ -449,7 +716,7 @@ export default function InfluencerDashboard() {
                   )}
                   
                   <div>
-                    <h4 className="font-medium mb-2">Business Message:</h4>
+                    <h4 className="font-medium mb-2">{copy.inquiryCard.businessMessage}</h4>
                     <p className="text-sm text-foreground leading-relaxed">{inquiry.message}</p>
                   </div>
 
@@ -457,19 +724,21 @@ export default function InfluencerDashboard() {
                     <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
                       <div className="flex items-center gap-2 mb-2">
                         <MessageSquare className="h-4 w-4 text-blue-500" />
-                        <h4 className="font-medium text-blue-700 dark:text-blue-400">Active Chat Conversation</h4>
+                        <h4 className="font-medium text-blue-700 dark:text-blue-400">
+                          {copy.inquiryCard.activeChat.title}
+                        </h4>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        The business is currently chatting with your AI agent to discuss details and negotiate terms.
+                        {copy.inquiryCard.activeChat.description}
                       </p>
                     </div>
                   ) : (
                     <>
                       {inquiry.aiRecommendation && (
-                        <AIRecommendation recommendation={inquiry.aiRecommendation} />
+                        <AIRecommendation recommendation={inquiry.aiRecommendation} copy={copy.aiRecommendation} />
                       )}
-                      
-                      <ChatHistory inquiryId={inquiry.id} />
+
+                      <ChatHistory inquiryId={inquiry.id} copy={copy.chatHistory} />
                     </>
                   )}
 
@@ -481,7 +750,7 @@ export default function InfluencerDashboard() {
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline"
                       >
-                        View Attachment
+                        {copy.inquiryCard.viewAttachment}
                       </a>
                     </div>
                   )}
@@ -496,7 +765,7 @@ export default function InfluencerDashboard() {
                         data-testid={`button-approve-${inquiry.id}`}
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
-                        Approve
+                        {copy.buttons.approve}
                       </Button>
                       <Button
                         size="sm"
@@ -506,7 +775,7 @@ export default function InfluencerDashboard() {
                         data-testid={`button-needs-info-${inquiry.id}`}
                       >
                         <HelpCircle className="h-4 w-4 mr-1" />
-                        Needs Info
+                        {copy.buttons.needsInfo}
                       </Button>
                       <Button
                         size="sm"
@@ -516,7 +785,7 @@ export default function InfluencerDashboard() {
                         data-testid={`button-reject-${inquiry.id}`}
                       >
                         <XCircle className="h-4 w-4 mr-1" />
-                        Reject
+                        {copy.buttons.reject}
                       </Button>
                       {inquiry.status !== "pending" && (
                         <Button
@@ -527,7 +796,7 @@ export default function InfluencerDashboard() {
                           data-testid={`button-pending-${inquiry.id}`}
                         >
                           <Clock className="h-4 w-4 mr-1" />
-                          Mark Pending
+                          {copy.buttons.markPending}
                         </Button>
                       )}
                     </div>
@@ -540,7 +809,7 @@ export default function InfluencerDashboard() {
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
+                      {copy.buttons.delete}
                     </Button>
                   </div>
                 </CardContent>
@@ -553,19 +822,13 @@ export default function InfluencerDashboard() {
       <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
         <DialogContent data-testid="dialog-status-message">
           <DialogHeader>
-            <DialogTitle>
-              {statusDialogData?.status === "approved" && "Approve Inquiry"}
-              {statusDialogData?.status === "rejected" && "Reject Inquiry"}
-              {statusDialogData?.status === "needs_info" && "Request More Information"}
-            </DialogTitle>
+            <DialogTitle>{statusDialogData ? copy.dialog.title[statusDialogData.status] : ""}</DialogTitle>
             <DialogDescription>
-              {statusDialogData?.status === "approved" && "Add an optional message to send with your approval (e.g., next steps, contact details)."}
-              {statusDialogData?.status === "rejected" && "Add an optional message to explain why you're declining (e.g., doesn't align with brand values)."}
-              {statusDialogData?.status === "needs_info" && "Add a message explaining what additional information you need."}
+              {statusDialogData ? copy.dialog.description[statusDialogData.status] : ""}
             </DialogDescription>
           </DialogHeader>
           <Textarea
-            placeholder="Your message to the business (optional)"
+            placeholder={copy.dialog.placeholder}
             value={customMessage}
             onChange={(e) => setCustomMessage(e.target.value)}
             className="min-h-[100px]"
@@ -578,7 +841,7 @@ export default function InfluencerDashboard() {
               disabled={updateStatusMutation.isPending}
               data-testid="button-cancel-status"
             >
-              Cancel
+              {copy.dialog.cancel}
             </Button>
             <Button
               onClick={handleStatusConfirm}
@@ -586,7 +849,7 @@ export default function InfluencerDashboard() {
               data-testid="button-confirm-status"
               variant={statusDialogData?.status === "rejected" ? "destructive" : "default"}
             >
-              {updateStatusMutation.isPending ? "Updating..." : "Confirm"}
+              {updateStatusMutation.isPending ? copy.dialog.updating : copy.dialog.confirm}
             </Button>
           </DialogFooter>
         </DialogContent>
