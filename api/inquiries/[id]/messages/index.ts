@@ -23,7 +23,9 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
   try {
     const { id } = req.query;
     const rawLanguage = typeof req.body?.language === 'string' ? req.body.language : undefined;
-    const language = rawLanguage === 'zh' ? 'zh' : 'en';
+    let requestLanguage: SupportedLanguage | undefined;
+    if (rawLanguage === 'zh') requestLanguage = 'zh';
+    else if (rawLanguage === 'en') requestLanguage = 'en';
     const { content } = req.body;
 
     if (!id || typeof id !== 'string') {
@@ -71,6 +73,15 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
       };
     }
 
+    const influencerUser = await storage.getUser(inquiry.influencerId);
+    const resolvedLanguage: SupportedLanguage =
+      requestLanguage ??
+      (influencerUser?.languagePreference === 'zh'
+        ? 'zh'
+        : influencerUser?.languagePreference === 'en'
+          ? 'en'
+          : 'en');
+
     const aiResponseContent = await generateChatResponse(
       conversationHistory,
       {
@@ -80,7 +91,7 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
         companyInfo: inquiry.companyInfo,
       },
       preferences,
-      language
+      resolvedLanguage
     );
 
     // Add AI response

@@ -23,7 +23,9 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
   try {
     const rawBody = (req.body ?? {}) as Record<string, unknown>;
     const rawLanguage = typeof rawBody.language === 'string' ? rawBody.language : undefined;
-    const language: SupportedLanguage = rawLanguage === 'zh' ? 'zh' : 'en';
+    let requestLanguage: SupportedLanguage | undefined;
+    if (rawLanguage === 'zh') requestLanguage = 'zh';
+    else if (rawLanguage === 'en') requestLanguage = 'en';
 
     const {
       language: _ignoredLanguage,
@@ -72,6 +74,15 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
       };
     }
 
+    const influencerUser = await storage.getUser(validation.data.influencerId);
+    const resolvedLanguage: SupportedLanguage =
+      requestLanguage ??
+      (influencerUser?.languagePreference === 'zh'
+        ? 'zh'
+        : influencerUser?.languagePreference === 'en'
+          ? 'en'
+          : 'en');
+
     const aiResponse = await generateInquiryResponse(
       {
         businessEmail: validation.data.businessEmail,
@@ -80,7 +91,7 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
         companyInfo: validation.data.companyInfo,
       },
       preferences,
-      language
+      resolvedLanguage
     );
 
     await storage.updateInquiryStatus(inquiry.id, 'pending', aiResponse);

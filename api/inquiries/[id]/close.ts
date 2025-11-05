@@ -13,7 +13,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { id } = req.query;
     const rawLanguage = typeof req.body?.language === 'string' ? req.body.language : undefined;
-    const language: SupportedLanguage = rawLanguage === 'zh' ? 'zh' : 'en';
+    let requestLanguage: SupportedLanguage | undefined;
+    if (rawLanguage === 'zh') requestLanguage = 'zh';
+    else if (rawLanguage === 'en') requestLanguage = 'en';
 
     console.log('🔒 Closing chat for inquiry:', id);
 
@@ -53,6 +55,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     }
 
+    const influencerUser = await storage.getUser(inquiry.influencerId);
+    const resolvedLanguage: SupportedLanguage =
+      requestLanguage ??
+      (influencerUser?.languagePreference === 'zh'
+        ? 'zh'
+        : influencerUser?.languagePreference === 'en'
+          ? 'en'
+          : 'en');
+
     const recommendation = await generateRecommendation(
       conversationHistory,
       {
@@ -62,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         companyInfo: inquiry.companyInfo,
       },
       preferences,
-      language
+      resolvedLanguage
     );
 
     // Close chat and save recommendation
