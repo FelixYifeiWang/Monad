@@ -175,7 +175,7 @@ I will not promote:
       contentPreferencesLabel: "内容偏好",
       contentPreferencesPlaceholder:
         "描述你擅长的内容类型、愿意或拒绝推广的方向、品牌价值观等。",
-      monetaryLabel: "最低报价（美元）",
+      monetaryLabel: "最低报价（人民币）",
       monetaryPlaceholder: "5000",
       contentLengthLabel: "偏好的内容时长",
       contentLengthPlaceholder: "请选择内容时长",

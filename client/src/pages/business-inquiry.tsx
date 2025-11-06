@@ -102,7 +102,7 @@ const translations = {
           placeholder: "请描述你的合作提案、活动细节、时间规划以及具体需求…",
         },
         price: {
-          label: "预算 / 报价（美元）",
+          label: "预算 / 报价（人民币）",
           placeholder: "5000",
         },
         companyInfo: {
