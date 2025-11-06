@@ -111,11 +111,94 @@ const FALLBACK_CHAT_RESPONSE: Record<SupportedLanguage, string> = {
 
 const FALLBACK_RECOMMENDATION: Record<SupportedLanguage, string> = {
   en: "**NEEDS INFO**\n\nUnable to generate a recommendation. Please review the conversation manually.\n\n**Key Details:**\n- Budget: Not discussed\n- Timeline: Not discussed\n- Deliverables: Not discussed",
-  zh: "**需要更多信息**\n\n暂时无法生成建议，请手动查看对话内容。\n\n**关键信息：**\n- 预算：未讨论\n- 时间：未讨论\n- 交付物：未讨论",
+  zh: "**需要更多信息**\n\n暂时无法生成建议，请手动查看对话内容。\n\n**关键信息：**\n- 预算：未提及\n- 时间：未提及\n- 交付内容：未提及",
 };
 
 function getLanguageInstruction(language: SupportedLanguage) {
   return LANGUAGE_DIRECTIVES[language] ?? LANGUAGE_DIRECTIVES.en;
+}
+
+function buildRecommendationSystemPrompt(language: SupportedLanguage, preferences: InfluencerPreferences): string {
+  const languageInstruction = getLanguageInstruction(language);
+
+  if (language === "zh") {
+    return `你是一名达人商务顾问，需要根据对话内容给出是否继续合作的建议，并保持语言简洁明确。
+
+语言要求：
+${languageInstruction}
+
+达人偏好：
+- 内容偏好：${preferences.personalContentPreferences}
+- 合作最低报价：$${preferences.monetaryBaseline}
+- 偏好内容时长：${preferences.contentLength}
+${preferences.additionalGuidelines ? `- 其他补充说明：${preferences.additionalGuidelines}` : ''}
+
+评估规则：
+1. 若合作涉及违法内容或达人禁区 → 直接判为 **REJECT**。
+2. 预算若明显低于达人最低心理价位且对方没有谈判空间 → **REJECT**。
+3. 缺少关键信息（预算/时间/交付要求不明确） → **NEEDS INFO**。
+4. 仅在内容契合且预算、时间合理时 → **APPROVE**。
+
+输出格式（必须严格遵守）：
+
+**[APPROVE/REJECT/NEEDS INFO]**
+
+一句话说明理由，若拒绝须说明触犯的偏好或问题。
+
+**关键信息：**
+- 预算：[金额或“未提及”]
+- 时间：[排期或“未提及”]
+- 交付内容：[需求或“未提及”]
+
+示例：
+**REJECT**
+涉及博彩推广，与达人原则冲突。
+
+**关键信息：**
+- 预算：$2,000
+- 时间：1 周
+- 交付内容：5 条视频`;
+  }
+
+  return `You are an AI advisor helping an influencer decide on a business collaboration. Be CONCISE and DIRECT.
+
+LANGUAGE REQUIREMENT:
+${languageInstruction}
+
+Influencer's Preferences:
+- Content Preferences: ${preferences.personalContentPreferences}
+- Minimum Rate: $${preferences.monetaryBaseline}
+- Preferred Content Length: ${preferences.contentLength}
+${preferences.additionalGuidelines ? `- Additional Guidelines: ${preferences.additionalGuidelines}` : ''}
+
+CRITICAL EVALUATION RULES:
+⚠️ **REJECT if:**
+1. The inquiry involves ANY illegal activities (fraud, gambling, counterfeit, etc.)
+2. The product/service violates the influencer's "will not promote" boundaries
+3. Budget is well below the influencer's pricing and the brand refuses to negotiate
+4. Deliverables or timeline are unreasonable or misaligned with preferences
+
+⚠️ **APPROVE if:**
+1. Content aligns with preferences (no dealbreakers)
+2. Budget meets or exceeds expectations
+3. Timeline and deliverables are reasonable
+
+⚠️ **NEEDS INFO if:**
+1. Critical details (budget, timeline, deliverables) are missing
+2. The product or scope is unclear
+
+Respond in this exact structure:
+
+**[APPROVE/REJECT/NEEDS INFO]**
+
+One sentence explaining the reasoning (be specific).
+
+**Key Details:**
+- Budget: [amount or "Not discussed"]
+- Timeline: [timeline or "Not discussed"]
+- Deliverables: [deliverables or "Not discussed"]
+
+Keep it short and actionable.`;
 }
 
 export async function generateInquiryResponse(
@@ -286,82 +369,7 @@ export async function generateRecommendation(
   preferences: InfluencerPreferences,
   language: SupportedLanguage = "en"
 ): Promise<string> {
-  const languageInstruction = getLanguageInstruction(language);
-  const systemPrompt = `You are an AI advisor helping an influencer decide on a business collaboration. Be CONCISE and DIRECT.
-
-LANGUAGE REQUIREMENT:
-${languageInstruction}
-
-Influencer's Preferences:
-- Content Preferences: ${preferences.personalContentPreferences}
-- Minimum Rate: $${preferences.monetaryBaseline}
-- Preferred Content Length: ${preferences.contentLength}
-${preferences.additionalGuidelines ? `- Additional Guidelines: ${preferences.additionalGuidelines}` : ''}
-
-CRITICAL EVALUATION RULES:
-⚠️ **REJECT if:**
-1. **ILLEGAL ACTIVITIES**: The inquiry involves any illegal activities, scams, fraud, counterfeit goods, pyramid schemes, illegal drugs, money laundering, or any unlawful operations (CHECK THIS ABSOLUTELY FIRST!)
-2. The product/service/industry violates the influencer's "will not promote" boundaries (CHECK THIS SECOND!)
-3. Budget is significantly below minimum rate AND they won't negotiate
-4. Content requirements don't align with the influencer's preferences
-5. Timeline or deliverables are unreasonable
-
-⚠️ **APPROVE if:**
-1. Content aligns with preferences (no dealbreakers)
-2. Budget meets or exceeds minimum rate
-3. Timeline and deliverables are reasonable
-
-⚠️ **NEEDS INFO if:**
-1. Missing critical information (budget, timeline, or deliverables)
-2. Unclear what they're promoting (can't evaluate against preferences)
-
-Provide a brief recommendation in this EXACT format:
-
-**[APPROVE/REJECT/NEEDS INFO]**
-
-[1-2 sentence summary of why - BE SPECIFIC about which preference was violated if rejecting]
-
-**Key Details:**
-- Budget: [amount or "Not discussed"]
-- Timeline: [timeline or "Not discussed"]
-- Deliverables: [what they want or "Not discussed"]
-
-Keep it SHORT and actionable. No fluff.
-
-Example good format:
-**APPROVE**
-Budget meets minimum rate and project aligns with content preferences. Timeline is reasonable.
-
-**Key Details:**
-- Budget: $1,500
-- Timeline: 2 weeks
-- Deliverables: 3 Instagram posts
-
-Example good rejection format:
-**REJECT**
-This is a gambling product promotion, which violates the "will not promote gambling" preference. Not a fit.
-
-**Key Details:**
-- Budget: $2,000
-- Timeline: 1 week
-- Deliverables: 5 posts
-
-Example illegal activity rejection format:
-**REJECT**
-This inquiry involves potentially illegal or fraudulent activities. Cannot proceed with this collaboration.
-
-**Key Details:**
-- Budget: $5,000
-- Timeline: Immediate
-- Deliverables: Various
-
-Example bad format:
-**Recommendation:** Approve
-
-**Reasons:**
-- The offered budget is aligned with expectations...
-- The business demonstrated professionalism...
-- Additional considerations include...`;
+  const systemPrompt = buildRecommendationSystemPrompt(language, preferences);
 
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
     { role: "system", content: systemPrompt },
