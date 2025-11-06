@@ -53,6 +53,8 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
       content,
     });
 
+    await storage.updateLastBusinessMessage(id);
+
     // Get conversation history
     const conversationHistory = await storage.getMessagesByInquiry(id);
 

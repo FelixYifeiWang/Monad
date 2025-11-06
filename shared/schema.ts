@@ -77,6 +77,7 @@ export const inquiries = pgTable("inquiries", {
   aiRecommendation: text("ai_recommendation"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  lastBusinessMessageAt: timestamp("last_business_message_at"),
 });
 
 export const insertInquirySchema = createInsertSchema(inquiries).omit({

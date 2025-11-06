@@ -13,7 +13,7 @@ import {
   type InsertMessage,
 } from "../../shared/schema.js";
 import { db } from "./db.js";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNotNull, lte } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -36,6 +36,8 @@ export interface IStorage {
   getInquiry(id: string): Promise<Inquiry | undefined>;
   updateInquiryStatus(id: string, status: "pending" | "approved" | "rejected" | "needs_info", aiResponse?: string): Promise<Inquiry>;
   closeInquiryChat(id: string, aiRecommendation: string): Promise<Inquiry>;
+  updateLastBusinessMessage(id: string): Promise<void>;
+  getIdleOpenInquiries(threshold: Date): Promise<Inquiry[]>;
   deleteInquiry(id: string): Promise<void>;
   
   // Messages
@@ -133,7 +135,10 @@ export class DatabaseStorage implements IStorage {
 
   // Inquiries
   async createInquiry(inquiry: InsertInquiry): Promise<Inquiry> {
-    const [result] = await db.insert(inquiries).values(inquiry).returning();
+    const [result] = await db
+      .insert(inquiries)
+      .values({ ...inquiry, lastBusinessMessageAt: new Date() })
+      .returning();
     return result;
   }
 
@@ -170,6 +175,27 @@ export class DatabaseStorage implements IStorage {
       .where(eq(inquiries.id, id))
       .returning();
     return result;
+  }
+
+  async updateLastBusinessMessage(id: string): Promise<void> {
+    await db
+      .update(inquiries)
+      .set({ lastBusinessMessageAt: new Date(), updatedAt: new Date() })
+      .where(eq(inquiries.id, id));
+  }
+
+  async getIdleOpenInquiries(threshold: Date): Promise<Inquiry[]> {
+    return await db
+      .select()
+      .from(inquiries)
+      .where(
+        and(
+          eq(inquiries.chatActive, true),
+          isNotNull(inquiries.lastBusinessMessageAt),
+          lte(inquiries.lastBusinessMessageAt, threshold),
+        )
+      )
+      .orderBy(desc(inquiries.lastBusinessMessageAt));
   }
 
   async deleteInquiry(id: string): Promise<void> {

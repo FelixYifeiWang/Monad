@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Building2, CheckCircle2, Upload, X } from "lucide-react";
+import { Building2, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 import { useLanguage } from "@/providers/language-provider";
 
@@ -56,12 +56,6 @@ const translations = {
           label: "Company Info",
           placeholder: "Tell us about your company, products, or services...",
         },
-      },
-      attachment: {
-        label: "Attachment (Optional)",
-        instructions: "Click to upload or drag and drop",
-        formats: "PDF, DOC, DOCX, TXT, PNG, JPG, GIF (max 10MB)",
-        remove: "Remove file",
       },
       buttons: {
         submit: "Submit Inquiry",
@@ -116,12 +110,6 @@ const translations = {
           placeholder: "介绍一下你的公司、产品或服务…",
         },
       },
-      attachment: {
-        label: "附件（可选）",
-        instructions: "点击上传或拖拽文件到此处",
-        formats: "支持 PDF、DOC、DOCX、TXT、PNG、JPG、GIF（最大 10MB）",
-        remove: "移除附件",
-      },
       buttons: {
         submit: "提交询问",
         submitting: "提交中…",
@@ -158,7 +146,6 @@ export default function BusinessInquiry() {
   const inquirySchema = useMemo(() => createInquirySchema(copy.validation), [copy]);
   const [submitted, setSubmitted] = useState(false);
   const [aiResponse, setAiResponse] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const { data: influencer, isLoading: loadingInfluencer } = useQuery<{
     id: string;
@@ -201,16 +188,6 @@ export default function BusinessInquiry() {
     }
   }, [influencer, form]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const removeFile = () => {
-    setSelectedFile(null);
-  };
-
   const submitMutation = useMutation({
     mutationFn: async (data: InquiryFormData) => {
       // ✅ Send as JSON instead of FormData
@@ -221,7 +198,6 @@ export default function BusinessInquiry() {
         price: data.price,
         companyInfo: data.companyInfo,
         language,
-        // File uploads disabled for now - will add with Vercel Blob later
       };
 
       const response = await fetch("/api/inquiries", {
@@ -311,7 +287,6 @@ export default function BusinessInquiry() {
                   onClick={() => {
                     setSubmitted(false);
                     setAiResponse("");
-                    setSelectedFile(null);
                     form.reset({
                       ...defaultValues,
                       influencerId: influencer.id,
@@ -445,46 +420,6 @@ export default function BusinessInquiry() {
                   )}
                 />
 
-                <div>
-                  <FormLabel>{copy.form.attachment.label}</FormLabel>
-                  <div className="mt-2">
-                    {selectedFile ? (
-                      <div className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
-                        <span className="text-sm flex-1 truncate">{selectedFile.name}</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={removeFile}
-                          data-testid="button-remove-file"
-                          aria-label={copy.form.attachment.remove}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover-elevate transition-colors">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="h-8 w-8 text-muted-foreground mb-2" />
-                          <p className="text-sm text-muted-foreground">
-                            {copy.form.attachment.instructions}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {copy.form.attachment.formats}
-                          </p>
-                        </div>
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={handleFileChange}
-                          accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif"
-                          data-testid="input-file"
-                        />
-                      </label>
-                    )}
-                  </div>
-                </div>
-
                 <div className="flex gap-3 pt-2">
                   <Button
                     type="submit"
@@ -498,13 +433,12 @@ export default function BusinessInquiry() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => {
-                      form.reset({
-                        ...defaultValues,
-                        influencerId: influencer.id,
-                      });
-                      setSelectedFile(null);
-                    }}
+                  onClick={() => {
+                    form.reset({
+                      ...defaultValues,
+                      influencerId: influencer.id,
+                    });
+                  }}
                     disabled={submitMutation.isPending}
                     data-testid="button-reset-form"
                   >

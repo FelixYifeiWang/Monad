@@ -10,5 +10,14 @@
       "source": "/((?!api).*)",
       "destination": "/index.html"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/close-idle-chats",
+      "schedule": "*/5 * * * *",
+      "headers": {
+        "Authorization": "Bearer odB0g+y+J2B2kJAG1eijRZapr4a7SHWFgjsJ5/QvqiU="
+      }
+    }
   ]
 }

@@ -167,50 +167,6 @@ export default function BusinessChat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Auto-close chat when user closes the page or navigates away
-  useEffect(() => {
-    if (!params?.inquiryId || !inquiry?.chatActive) return;
-
-    const closeChat = () => {
-      // Use sendBeacon for reliable request during page unload
-      const blob = new Blob([JSON.stringify({ language })], { type: 'application/json' });
-      navigator.sendBeacon(`/api/inquiries/${params.inquiryId}/close`, blob);
-    };
-
-    // Handle full page close/refresh
-    const handleBeforeUnload = () => {
-      closeChat();
-    };
-
-    // Handle visibility changes (tab switch, minimize, etc.)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        closeChat();
-      }
-    };
-
-    // Handle page hide (covers more cases than beforeunload)
-    const handlePageHide = () => {
-      closeChat();
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pagehide', handlePageHide);
-
-    // Cleanup: close chat when component unmounts (SPA navigation)
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pagehide', handlePageHide);
-      
-      // Close chat on component unmount (e.g., navigating away in SPA)
-      if (inquiry?.chatActive) {
-        closeChat();
-      }
-    };
-  }, [params?.inquiryId, inquiry?.chatActive, language]);
-
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim() || !inquiry?.chatActive) return;
