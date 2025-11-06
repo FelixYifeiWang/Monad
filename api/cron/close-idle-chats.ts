@@ -10,8 +10,12 @@ function getAuthorized(req: VercelRequest): boolean {
     console.warn('⚠️  CRON_SECRET is not set; rejecting request');
     return false;
   }
+
   const header = req.headers['authorization'];
-  return header === `Bearer ${secret}`;
+  if (header === `Bearer ${secret}`) return true;
+
+  const querySecret = typeof req.query?.secret === 'string' ? req.query.secret : undefined;
+  return querySecret === secret;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

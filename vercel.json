@@ -13,11 +13,8 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/close-idle-chats",
-      "schedule": "*/5 * * * *",
-      "headers": {
-        "Authorization": "Bearer odB0g+y+J2B2kJAG1eijRZapr4a7SHWFgjsJ5/QvqiU="
-      }
+      "path": "/api/cron/close-idle-chats?secret=odB0g%2By%2BJ2B2kJAG1eijRZapr4a7SHWFgjsJ5%2FQvqiU%3D",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
