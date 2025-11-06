@@ -211,7 +211,7 @@ One sentence explaining the reasoning (be specific).
 - Timeline: [timeline or "Not discussed"]
 - Deliverables: [deliverables or "Not discussed"]
 
-If applicable, add a final line `Message to influencer: <content>` capturing any relay request.
+  If applicable, add a final line "Message to influencer: <content>" capturing any relay request.
 
 Keep it short and actionable.`;
 }
