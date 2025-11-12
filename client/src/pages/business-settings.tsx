@@ -23,7 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import type { BusinessProfile } from "@shared/schema";
 import { isBusinessProfileComplete } from "@/lib/businessProfile";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
 
 const translations = {
   en: {
@@ -268,6 +268,16 @@ export default function BusinessSettingsPage() {
     mutation.mutate(values);
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch (error) {
+      console.error("Business logout failed:", error);
+    } finally {
+      window.location.href = "/business/login";
+    }
+  };
+
   if (isLoading || !profile) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -291,11 +301,16 @@ export default function BusinessSettingsPage() {
                 {copy.header.back}
               </Button>
             </Link>
-            <div className="text-sm text-muted-foreground">{copy.header.subtitle}</div>
+            <h1 className="text-3xl font-semibold tracking-tight">{copy.header.title}</h1>
           </div>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>{user?.email}</span>
-            <LanguageToggle />
+            <div className="flex items-center gap-2">
+              <LanguageToggle className="h-9" />
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
