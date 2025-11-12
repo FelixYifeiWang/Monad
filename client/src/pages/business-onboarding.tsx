@@ -44,6 +44,11 @@ const translations = {
       company: {
         title: "Tell us about your brand",
         description: "These basics help influencers recognize who you are.",
+        labels: {
+          company: "Company",
+          industry: "Industry",
+          website: "Website",
+        },
         placeholders: {
           company: "Acme Studios",
           industry: "Beauty / Lifestyle / Tech...",
@@ -65,8 +70,8 @@ const translations = {
         storyPlaceholder: "Describe what makes your brand unique...",
       },
       socials: {
-        title: "Social presence",
-        description: "Share the channels where businesses can learn more about you.",
+        title: "Social presence (optional)",
+        description: "Share the channels where people can learn more about you.",
       },
     },
     companySizeOptions: ["1-5", "6-20", "21-50", "51-100", "100+"],
@@ -88,6 +93,11 @@ const translations = {
       company: {
         title: "介绍你的品牌",
         description: "这些基础信息有助于创作者快速了解你。",
+        labels: {
+          company: "公司名称",
+          industry: "所属行业",
+          website: "公司网站",
+        },
         placeholders: {
           company: "Acme Studios",
           industry: "美妆 / 生活方式 / 科技…",
@@ -109,13 +119,13 @@ const translations = {
         storyPlaceholder: "介绍品牌定位、产品线、合作风格等…",
       },
       socials: {
-        title: "社媒资料",
-        description: "告诉创作者品牌活跃的平台，方便他们了解更多信息。",
+        title: "社媒资料（可选）",
+        description: "分享品牌活跃的平台，方便他人了解更多信息。",
       },
     },
     companySizeOptions: ["1-5", "6-20", "21-50", "51-100", "100+"],
     budgetOptions: ["<¥3w", "¥3w-¥10w", "¥10w-¥35w", "¥35w+"],
-    socials: ["instagram", "tiktok", "twitter"],
+    socials: ["instagram", "tiktok", "x/twitter"],
   },
 } as const;
 
@@ -368,31 +378,37 @@ export default function BusinessOnboardingPage() {
             <h2 className="text-2xl font-semibold text-[#573ccb] md:text-3xl">{stepCopy.title}</h2>
             <p className="text-base text-slate-600">{stepCopy.description}</p>
           </div>
-          <div className="w-full max-w-lg space-y-4 text-left">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[#573ccb]">Company</label>
-              <input
-                value={companyName}
-                onChange={(event) => setCompanyName(event.target.value)}
-                placeholder={stepCopy.placeholders.company}
-                className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[#573ccb]">Industry</label>
-              <input
-                value={industry}
-                onChange={(event) => setIndustry(event.target.value)}
-                placeholder={stepCopy.placeholders.industry}
-                className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
-              />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="w-full max-w-lg space-y-4 text-left">
               <div>
-                <label className="mb-2 block text-sm font-medium text-[#573ccb]">Website</label>
+                <label className="mb-2 block text-sm font-medium text-[#573ccb]">
+                  {stepCopy.labels.company}
+                </label>
                 <input
-                  value={website}
-                  onChange={(event) => setWebsite(event.target.value)}
+                  value={companyName}
+                  onChange={(event) => setCompanyName(event.target.value)}
+                  placeholder={stepCopy.placeholders.company}
+                  className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[#573ccb]">
+                  {stepCopy.labels.industry}
+                </label>
+                <input
+                  value={industry}
+                  onChange={(event) => setIndustry(event.target.value)}
+                  placeholder={stepCopy.placeholders.industry}
+                  className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+                />
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-[#573ccb]">
+                    {stepCopy.labels.website}
+                  </label>
+                  <input
+                    value={website}
+                    onChange={(event) => setWebsite(event.target.value)}
                   placeholder={stepCopy.placeholders.website}
                   className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
                 />
@@ -480,7 +496,7 @@ export default function BusinessOnboardingPage() {
                     }))
                   }
                   placeholder={
-                    platform === "twitter"
+                    platform === "x/twitter"
                       ? "https://twitter.com/yourbrand"
                       : `https://www.${platform}.com/yourbrand`
                   }
