@@ -148,8 +148,6 @@ export default function BusinessOnboardingPage() {
   const [industry, setIndustry] = useState("");
   const [website, setWebsite] = useState("");
   const [companySize, setCompanySize] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
   const [targetRegions, setTargetRegions] = useState("");
   const [budgetRange, setBudgetRange] = useState("");
   const [description, setDescription] = useState("");
@@ -169,8 +167,6 @@ export default function BusinessOnboardingPage() {
     setIndustry(profile.industry ?? "");
     setWebsite(profile.website ?? "");
     setCompanySize(profile.companySize ?? "");
-    setContactName(profile.contactName ?? "");
-    setContactPhone(profile.contactPhone ?? "");
     setTargetRegions(profile.targetRegions ?? "");
     setBudgetRange(profile.budgetRange ?? "");
     setDescription(profile.description ?? "");
@@ -193,8 +189,6 @@ export default function BusinessOnboardingPage() {
         industry: industry.trim(),
         website: website.trim(),
         companySize,
-        contactName: contactName.trim(),
-        contactPhone: contactPhone.trim(),
         targetRegions: targetRegions.trim(),
         budgetRange,
         description: description.trim(),
@@ -247,9 +241,6 @@ export default function BusinessOnboardingPage() {
         return null;
       case "socials":
       default:
-        if (!contactName.trim()) {
-          return copy.errors.contact;
-        }
         return null;
     }
   };
@@ -455,24 +446,6 @@ export default function BusinessOnboardingPage() {
           <p className="text-base text-slate-600">{stepCopy.description}</p>
         </div>
         <div className="w-full max-w-lg space-y-5 text-left">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.contactLabel}</label>
-            <input
-              value={contactName}
-              onChange={(event) => setContactName(event.target.value)}
-              placeholder="e.g. Jane Doe"
-              className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.phoneLabel}</label>
-            <input
-              value={contactPhone}
-              onChange={(event) => setContactPhone(event.target.value)}
-              placeholder="+1 555 111 2233"
-              className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
-            />
-          </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.socialsLabel}</label>
             <div className="space-y-3">

@@ -12,7 +12,6 @@ export function isBusinessProfileComplete(profile?: BusinessProfile | null): boo
     isFilled(profile.companySize) &&
     isFilled(profile.targetRegions) &&
     isFilled(profile.budgetRange) &&
-    isFilled(profile.description) &&
-    isFilled(profile.contactName)
+    isFilled(profile.description)
   );
 }
