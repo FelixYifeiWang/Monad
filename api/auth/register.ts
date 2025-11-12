@@ -51,6 +51,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let userToReturn;
 
   if (existingUser) {
+    if (existingUser.passwordHash) {
+      return res.status(409).json({ message: 'Account already exists. Please log in.' });
+    }
+
     const updated = await storage.updatePassword(existingUser.id, passwordHash);
     userToReturn = sanitizeUser(updated);
   } else {
