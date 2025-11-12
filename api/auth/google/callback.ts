@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import passport from 'passport';
 import { initAuth } from '../../_lib/middleware.js';
-import type { User } from '../../shared/schema.js';
+import type { User } from '../../../shared/schema.js';
 
 type UserType = User["userType"];
 

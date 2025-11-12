@@ -31,6 +31,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     next,
   };
 
+  // Ensure the context is persisted before redirecting to Google
+  await new Promise<void>((resolve, reject) => {
+    // @ts-ignore
+    req.session.save((err: unknown) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve();
+    });
+  });
+
   // Use a promise wrapper for passport authenticate
   return new Promise((resolve) => {
     passport.authenticate('google', {
