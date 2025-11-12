@@ -4,6 +4,10 @@ import { useLanguage } from "@/providers/language-provider";
 import type { BusinessProfile } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
+import LanguageToggle from "@/components/language-toggle";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 const boardStyle: CSSProperties = {
   backgroundImage: "url(/images/onboard_board.png)",
@@ -64,7 +68,7 @@ const translations = {
         socialsLabel: "Social channels",
       },
     },
-    companySizeOptions: ["1-10", "11-50", "51-200", "201-500", "500+"],
+    companySizeOptions: ["1-5", "6-20", "21-50", "51-100", "100+"],
     budgetOptions: ["<$5k", "$5k-$20k", "$20k-$50k", "$50k+"],
     socials: ["instagram", "tiktok", "youtube", "linkedin"],
   },
@@ -107,7 +111,7 @@ const translations = {
         socialsLabel: "社交账号",
       },
     },
-    companySizeOptions: ["1-10", "11-50", "51-200", "201-500", "500+"],
+    companySizeOptions: ["1-5", "6-20", "21-50", "51-100", "100+"],
     budgetOptions: ["<¥3w", "¥3w-¥10w", "¥10w-¥35w", "¥35w+"],
     socials: ["instagram", "tiktok", "youtube", "linkedin"],
   },
@@ -124,6 +128,7 @@ function parseSocialLinks(links: unknown) {
 
 export default function BusinessOnboardingPage() {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const copy = useMemo<BusinessOnboardingCopy>(() => translations[language], [language]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -462,8 +467,25 @@ export default function BusinessOnboardingPage() {
     );
   }
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      window.location.href = "/business/login";
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white px-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-white px-4">
+      <div className="absolute right-6 top-6 flex items-center gap-3">
+        <div className="text-sm text-slate-500">{user?.email}</div>
+        <LanguageToggle className="h-9" />
+        <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+          <LogOut className="h-4 w-4" />
+        </Button>
+      </div>
       <div className="relative flex w-full max-w-4xl flex-col items-center px-6 py-14" style={boardStyle}>
         <div className="flex w-full flex-1 flex-col items-center justify-center gap-10">
           {renderStepContent()}

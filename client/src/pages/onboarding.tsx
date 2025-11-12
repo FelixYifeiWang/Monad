@@ -6,6 +6,9 @@ import type { InfluencerPreferences } from "@shared/schema";
 import { getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/providers/language-provider";
+import LanguageToggle from "@/components/language-toggle";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 type ContentLength = "short" | "medium" | "long" | "flexible";
 
@@ -199,7 +202,7 @@ const parseMonetaryBaseline = (input: string): number | null => {
 };
 
 export default function OnboardingPage() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const { language } = useLanguage();
   const copy = useMemo<OnboardingCopy>(() => translations[language], [language]);
   const localizedContentLengthOptions = copy.contentLengthOptions;
@@ -457,8 +460,25 @@ export default function OnboardingPage() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      window.location.href = "/influencer/login";
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white">
+    <div className="relative flex min-h-screen items-center justify-center bg-white">
+      <div className="absolute right-6 top-6 flex items-center gap-3">
+        <div className="text-sm text-slate-500">{user?.email}</div>
+        <LanguageToggle className="h-9" />
+        <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+          <LogOut className="h-4 w-4" />
+        </Button>
+      </div>
       <div
         className="relative mx-4 flex w-full max-w-4xl flex-col items-center px-6 py-14"
         style={boardStyle}
