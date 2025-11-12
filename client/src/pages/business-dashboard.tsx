@@ -69,8 +69,6 @@ export default function BusinessDashboard() {
               title: "当前状态",
               ready: "你已准备好开展合作",
               reminder: "保持资料更新能帮助创作者更好地了解你。",
-              needMore: "需要更多创作者？",
-              explore: "在创作者页面发起新的询问。",
             },
           }
         : {
@@ -107,8 +105,6 @@ export default function BusinessDashboard() {
               title: "Status",
               ready: "You're ready to collaborate",
               reminder: "Keep your profile updated so influencers know how to work with you.",
-              needMore: "Need more creators?",
-              explore: "Explore influencer profiles and submit new briefs anytime.",
             },
           },
     [language],
@@ -260,15 +256,6 @@ export default function BusinessDashboard() {
                     </Button>
                   </Link>
                 )}
-              </div>
-              <div className="rounded-lg border border-dashed border-muted-foreground/40 p-4">
-                <p className="font-medium">{copy.statusCard.needMore}</p>
-                <p className="text-sm text-muted-foreground">{copy.statusCard.explore}</p>
-                <Link href="/influencer">
-                  <Button className="mt-4" size="sm" variant="outline">
-                    {copy.startInquiry}
-                  </Button>
-                </Link>
               </div>
             </CardContent>
           </Card>
