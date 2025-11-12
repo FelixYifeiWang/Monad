@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import type { BusinessProfile } from "@shared/schema";
 import { isBusinessProfileComplete } from "@/lib/businessProfile";
 import { Link, useLocation } from "wouter";
+import { ArrowLeft } from "lucide-react";
 
 const translations = {
   en: {
@@ -279,16 +280,18 @@ export default function BusinessSettingsPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <div>
-            <div className="flex items-center gap-3">
-              <Link href="/business">
-                <Button variant="ghost" size="sm">
-                  {copy.header.back}
-                </Button>
-              </Link>
-              <div className="text-sm text-muted-foreground">{copy.header.subtitle}</div>
+          <div className="flex items-center gap-4">
+            <div className="text-2xl font-bold tracking-tight">
+              <span className="text-primary">Peri.</span>
+              <span className="text-foreground">ai</span>
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight">{copy.header.title}</h1>
+            <Link href="/business">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                {copy.header.back}
+              </Button>
+            </Link>
+            <div className="text-sm text-muted-foreground">{copy.header.subtitle}</div>
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span>{user?.email}</span>
