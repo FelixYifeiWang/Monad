@@ -14,6 +14,8 @@ import OnboardingPage from "@/pages/onboarding";
 import type { InfluencerPreferences } from "@shared/schema";
 import { getQueryFn } from "@/lib/queryClient";
 import { LanguageProvider } from "@/providers/language-provider";
+import BusinessHome from "@/pages/business-home";
+import BusinessDashboard from "@/pages/business-dashboard";
 
 const preferencesQueryFn = getQueryFn<InfluencerPreferences | null>({ on401: "returnNull" });
 
@@ -45,6 +47,8 @@ function Router() {
     <Switch>
       <Route path="/i/:username/chat/:inquiryId" component={BusinessChat} />
       <Route path="/i/:username" component={BusinessInquiry} />
+      <Route path="/business" component={BusinessHome} />
+      <Route path="/business/dashboard" component={BusinessDashboard} />
       <Route path="/login" component={LoginPage} />
       {isAuthenticated ? (
         <>

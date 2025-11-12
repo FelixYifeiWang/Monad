@@ -1,6 +1,21 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import passport from 'passport';
 import { initAuth } from '../../_lib/middleware.js';
+import type { User } from '../../shared/schema.js';
+
+type UserType = User["userType"];
+
+function parseUserType(value: unknown): UserType | undefined {
+  if (value === 'business') return 'business';
+  if (value === 'influencer') return 'influencer';
+  return undefined;
+}
+
+function sanitizeNext(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  if (!value.startsWith('/')) return undefined;
+  return value;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'GET') {
@@ -28,6 +43,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return res.redirect('/login?error=login_failed');
         }
 
+        const context = (req as any).session?.oauthLoginContext ?? {};
+        const expectedUserType = parseUserType(context.userType);
+        const next = sanitizeNext(context.next);
+        const destinationFromContext = next ?? (expectedUserType === 'business' ? '/business/dashboard' : '/');
+
+        const redirectTarget =
+          expectedUserType && user.userType !== expectedUserType
+            ? expectedUserType === 'business'
+              ? '/business?error=wrong_portal'
+              : '/login?error=wrong_portal'
+            : destinationFromContext;
+
         // ✅ CRITICAL: Save session before redirect
         // @ts-ignore
         req.session.save((saveErr: any) => {
@@ -36,9 +63,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return res.redirect('/login?error=session_failed');
           }
 
+          if ((req as any).session?.oauthLoginContext) {
+            delete (req as any).session.oauthLoginContext;
+          }
+
           console.log('✅ Session saved successfully');
           // Redirect to home after session is saved
-          res.redirect('/');
+          res.redirect(redirectTarget);
           resolve(undefined);
         });
       });

@@ -3,6 +3,7 @@ import {
   influencerPreferences,
   inquiries,
   messages,
+  businessProfiles,
   type User,
   type UpsertUser,
   type InfluencerPreferences,
@@ -11,6 +12,8 @@ import {
   type InsertInquiry,
   type Message,
   type InsertMessage,
+  type BusinessProfile,
+  type InsertBusinessProfile,
 } from "../../shared/schema.js";
 import { db } from "./db.js";
 import { eq, and, desc, isNotNull, lte } from "drizzle-orm";
@@ -25,6 +28,8 @@ export interface IStorage {
   updateUsername(userId: string, username: string): Promise<User>;
   updateLanguagePreference(userId: string, language: string): Promise<User>;
   updatePassword(userId: string, passwordHash: string): Promise<User>;
+  getBusinessProfile(userId: string): Promise<BusinessProfile | undefined>;
+  upsertBusinessProfile(profile: InsertBusinessProfile): Promise<BusinessProfile>;
   
   // Influencer preferences
   getInfluencerPreferences(userId: string): Promise<InfluencerPreferences | undefined>;
@@ -107,6 +112,26 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, userId))
       .returning();
     return user;
+  }
+
+  async getBusinessProfile(userId: string): Promise<BusinessProfile | undefined> {
+    const [profile] = await db.select().from(businessProfiles).where(eq(businessProfiles.userId, userId));
+    return profile;
+  }
+
+  async upsertBusinessProfile(profile: InsertBusinessProfile): Promise<BusinessProfile> {
+    const [result] = await db
+      .insert(businessProfiles)
+      .values(profile)
+      .onConflictDoUpdate({
+        target: businessProfiles.userId,
+        set: {
+          ...profile,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return result;
   }
 
   // Influencer preferences

@@ -1,7 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import passport from 'passport';
 import { initAuth } from '../_lib/middleware.js';
-import { sanitizeUser } from '../_lib/userUtils.js';
+import type { User } from '../../shared/schema.js';
+
+function resolveUserType(raw: unknown): User["userType"] | undefined {
+  if (raw === 'business') return 'business';
+  if (raw === 'influencer') return 'influencer';
+  return undefined;
+}
 
 function authenticate(req: VercelRequest, res: VercelResponse): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -25,7 +31,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await initAuth(req, res);
+    const expectedUserType = resolveUserType(req.body?.userType);
     const user = await authenticate(req, res);
+
+    if (expectedUserType && user.userType !== expectedUserType) {
+      // @ts-ignore
+      req.logout?.();
+      return res.status(403).json({ message: `Please use the ${expectedUserType} login portal` });
+    }
+
     res.json(user);
   } catch (error: any) {
     const message = error?.message || 'Login failed';

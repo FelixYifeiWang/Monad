@@ -8,9 +8,17 @@ import { storage } from './storage.js';
 import type { SupportedLanguage } from './aiAgent.js';
 import { sanitizeUser } from './userUtils.js';
 import bcrypt from 'bcryptjs';
+import type { User } from '../../shared/schema.js';
 
 const PREFERRED_LANGUAGE_COOKIE = 'preferred_language';
 const SUPPORTED_LANGUAGES: SupportedLanguage[] = ['en', 'zh'];
+type UserType = User["userType"];
+
+function parseUserType(value: unknown): UserType | undefined {
+  if (value === 'business') return 'business';
+  if (value === 'influencer') return 'influencer';
+  return undefined;
+}
 
 function parsePreferredLanguage(cookieHeader?: string): SupportedLanguage | undefined {
   if (!cookieHeader) return undefined;
@@ -73,6 +81,9 @@ export function configurePassport() {
 
           console.log('✅ Google OAuth successful:', email);
 
+          const sessionContext = req.session?.oauthLoginContext;
+          const requestedUserType = parseUserType(sessionContext?.userType);
+
           const preferredLanguageFromCookie = parsePreferredLanguage(req.headers?.cookie);
           const userById = await storage.getUser(profile.id);
           const userByEmail = await storage.getUserByEmail(email);
@@ -84,6 +95,10 @@ export function configurePassport() {
               ? 'en'
               : undefined;
           const resolvedLanguage: SupportedLanguage = existingLanguage || preferredLanguageFromCookie || 'en';
+          const resolvedUserType: UserType =
+            existingUser?.userType ??
+            requestedUserType ??
+            'influencer';
 
           const idToUse = existingUser?.id ?? profile.id;
 
@@ -96,7 +111,12 @@ export function configurePassport() {
             profileImageUrl: profile.photos?.[0]?.value || existingUser?.profileImageUrl || null,
             passwordHash: existingUser?.passwordHash ?? null,
             languagePreference: resolvedLanguage,
+            userType: resolvedUserType,
           });
+
+          if (resolvedUserType === 'business') {
+            await storage.upsertBusinessProfile({ userId: updatedUser.id });
+          }
 
           done(null, sanitizeUser(updatedUser));
         } catch (error) {

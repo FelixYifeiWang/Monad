@@ -4,8 +4,14 @@ import { initAuth, getPreferredLanguageFromRequest } from '../_lib/middleware.js
 import { storage } from '../_lib/storage.js';
 import { sanitizeUser } from '../_lib/userUtils.js';
 import type { SupportedLanguage } from '../_lib/aiAgent.js';
+import type { User } from '../../shared/schema.js';
 
 const MIN_PASSWORD_LENGTH = 8;
+function resolveUserType(raw: unknown): User["userType"] {
+  if (raw === 'business') return 'business';
+  if (raw === 'influencer') return 'influencer';
+  return 'influencer';
+}
 
 async function loginUser(req: VercelRequest, user: any) {
   return new Promise<void>((resolve, reject) => {
@@ -27,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   await initAuth(req, res);
 
-  const { email, password } = req.body ?? {};
+  const { email, password, userType: rawUserType } = req.body ?? {};
 
   if (!email || typeof email !== 'string') {
     return res.status(400).json({ message: 'Email is required' });
@@ -39,11 +45,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const normalizedEmail = email.trim().toLowerCase();
 
+  const requestedUserType = resolveUserType(rawUserType);
   const existingUser = await storage.getUserByEmail(normalizedEmail);
   const passwordHash = await bcrypt.hash(password, 10);
   let userToReturn;
 
   if (existingUser) {
+    if (rawUserType && existingUser.userType !== requestedUserType) {
+      return res
+        .status(409)
+        .json({ message: `Account already registered as ${existingUser.userType}` });
+    }
+
     const updated = await storage.updatePassword(existingUser.id, passwordHash);
     userToReturn = sanitizeUser(updated);
   } else {
@@ -52,7 +65,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email: normalizedEmail,
       passwordHash,
       languagePreference: preferredLanguage,
+      userType: requestedUserType,
     });
+
+    if (requestedUserType === 'business') {
+      await storage.upsertBusinessProfile({ userId: newUser.id });
+    }
     userToReturn = sanitizeUser(newUser);
   }
 

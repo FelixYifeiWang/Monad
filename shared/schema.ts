@@ -41,6 +41,23 @@ export const users = pgTable("users", {
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
+// Business profile table for additional metadata
+export const businessProfiles = pgTable("business_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  companyName: varchar("company_name"),
+  website: varchar("website"),
+  industry: varchar("industry"),
+  contactName: varchar("contact_name"),
+  contactPhone: varchar("contact_phone"),
+  headquarters: text("headquarters"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type InsertBusinessProfile = typeof businessProfiles.$inferInsert;
+export type BusinessProfile = typeof businessProfiles.$inferSelect;
+
 // Influencer preferences/instructions
 export const influencerPreferences = pgTable("influencer_preferences", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -66,6 +83,7 @@ export type InfluencerPreferences = typeof influencerPreferences.$inferSelect;
 export const inquiries = pgTable("inquiries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   influencerId: varchar("influencer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  businessId: varchar("business_id").references(() => users.id, { onDelete: "set null" }),
   businessEmail: varchar("business_email").notNull(),
   message: text("message").notNull(),
   price: integer("price"),
