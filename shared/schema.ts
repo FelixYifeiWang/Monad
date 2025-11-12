@@ -57,7 +57,6 @@ export const businessProfiles = pgTable("business_profiles", {
   industry: varchar("industry"),
   contactName: varchar("contact_name"),
   contactPhone: varchar("contact_phone"),
-  headquarters: text("headquarters"),
   description: text("description"),
   companySize: varchar("company_size"),
   targetRegions: text("target_regions"),

@@ -148,7 +148,6 @@ export default function BusinessOnboardingPage() {
   const [industry, setIndustry] = useState("");
   const [website, setWebsite] = useState("");
   const [companySize, setCompanySize] = useState("");
-  const [headquarters, setHeadquarters] = useState("");
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [targetRegions, setTargetRegions] = useState("");
@@ -170,7 +169,6 @@ export default function BusinessOnboardingPage() {
     setIndustry(profile.industry ?? "");
     setWebsite(profile.website ?? "");
     setCompanySize(profile.companySize ?? "");
-    setHeadquarters(profile.headquarters ?? "");
     setContactName(profile.contactName ?? "");
     setContactPhone(profile.contactPhone ?? "");
     setTargetRegions(profile.targetRegions ?? "");
@@ -195,7 +193,6 @@ export default function BusinessOnboardingPage() {
         industry: industry.trim(),
         website: website.trim(),
         companySize,
-        headquarters: headquarters.trim(),
         contactName: contactName.trim(),
         contactPhone: contactPhone.trim(),
         targetRegions: targetRegions.trim(),
@@ -274,13 +271,13 @@ export default function BusinessOnboardingPage() {
   };
 
   const renderCompanySizeOptions = () => (
-    <div className="grid w-full gap-3 md:grid-cols-3">
+    <div className="flex w-full flex-wrap gap-3">
       {copy.companySizeOptions.map((option) => (
         <button
           key={option}
           type="button"
           onClick={() => setCompanySize(option)}
-          className={`rounded-3xl border px-4 py-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c4b5fd] ${
+          className={`min-w-[72px] rounded-full border px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c4b5fd] ${
             companySize === option
               ? "border-[#b197fc] bg-white/90 text-[#573ccb]"
               : "border-transparent bg-white/70 text-slate-600 hover:border-[#e2d6ff]"
@@ -354,15 +351,6 @@ export default function BusinessOnboardingPage() {
                 <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.companySizeLabel}</label>
                 {renderCompanySizeOptions()}
               </div>
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[#573ccb]">Headquarters</label>
-              <input
-                value={headquarters}
-                onChange={(event) => setHeadquarters(event.target.value)}
-                placeholder="City, Country"
-                className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
-              />
             </div>
           </div>
         </div>

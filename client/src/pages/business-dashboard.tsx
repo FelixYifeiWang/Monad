@@ -148,10 +148,6 @@ export default function BusinessDashboard() {
                       <p className="font-medium">{profile.companySize || "—"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Headquarters</p>
-                      <p className="font-medium">{profile.headquarters || "—"}</p>
-                    </div>
-                    <div>
                       <p className="text-sm text-muted-foreground">Budget range</p>
                       <p className="font-medium">{profile.budgetRange || "—"}</p>
                     </div>
