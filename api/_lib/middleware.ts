@@ -86,7 +86,10 @@ export function configurePassport() {
 
           const preferredLanguageFromCookie = parsePreferredLanguage(req.headers?.cookie);
           const userById = await storage.getUser(profile.id);
-          const userByEmail = await storage.getUserByEmail(email);
+          const userByEmail =
+            requestedUserType
+              ? await storage.getUserByEmail(email, requestedUserType)
+              : await storage.getUserByEmail(email);
 
           const existingUser = userByEmail ?? userById;
           const existingLanguage = existingUser?.languagePreference === 'zh'
@@ -133,11 +136,18 @@ export function configurePassport() {
         usernameField: 'email',
         passwordField: 'password',
         session: true,
+        passReqToCallback: true,
       },
-      async (email: string, password: string, done) => {
+      async (req: any, email: string, password: string, done) => {
         try {
           const normalizedEmail = email.trim().toLowerCase();
-          const user = await storage.getUserByEmail(normalizedEmail);
+          const requestedUserType = parseUserType(req.body?.userType);
+
+          let user = await storage.getUserByEmail(normalizedEmail, requestedUserType);
+          if (!user && !requestedUserType) {
+            user = await storage.getUserByEmail(normalizedEmail);
+          }
+
           if (!user || !user.passwordHash) {
             return done(null, false, { message: 'Invalid email or password' });
           }

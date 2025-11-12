@@ -46,17 +46,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const normalizedEmail = email.trim().toLowerCase();
 
   const requestedUserType = resolveUserType(rawUserType);
-  const existingUser = await storage.getUserByEmail(normalizedEmail);
+  const existingUser = await storage.getUserByEmail(normalizedEmail, requestedUserType);
   const passwordHash = await bcrypt.hash(password, 10);
   let userToReturn;
 
   if (existingUser) {
-    if (rawUserType && existingUser.userType !== requestedUserType) {
-      return res
-        .status(409)
-        .json({ message: `Account already registered as ${existingUser.userType}` });
-    }
-
     const updated = await storage.updatePassword(existingUser.id, passwordHash);
     userToReturn = sanitizeUser(updated);
   } else {

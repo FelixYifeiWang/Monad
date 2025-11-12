@@ -8,6 +8,7 @@ import {
   varchar,
   integer,
   boolean,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -24,19 +25,25 @@ export const sessions = pgTable(
 );
 
 // User storage table (required for Replit Auth)
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email").unique(),
-  username: varchar("username").unique(),
-  firstName: varchar("first_name"),
-  lastName: varchar("last_name"),
-  profileImageUrl: varchar("profile_image_url"),
-  passwordHash: varchar("password_hash"),
-  languagePreference: varchar("language_preference").notNull().default("en"),
-  userType: varchar("user_type", { enum: ["influencer", "business"] }).notNull().default("influencer"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    email: varchar("email"),
+    username: varchar("username").unique(),
+    firstName: varchar("first_name"),
+    lastName: varchar("last_name"),
+    profileImageUrl: varchar("profile_image_url"),
+    passwordHash: varchar("password_hash"),
+    languagePreference: varchar("language_preference").notNull().default("en"),
+    userType: varchar("user_type", { enum: ["influencer", "business"] }).notNull().default("influencer"),
+    createdAt: timestamp("created_at").defaultNow(),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  (table) => ({
+    emailUserTypeKey: uniqueIndex("users_email_user_type_idx").on(table.email, table.userType),
+  }),
+);
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;

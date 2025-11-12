@@ -29,7 +29,11 @@ export default function LoginPage() {
   const isRegisterMode = mode === 'register';
 
   const handleGoogleLogin = () => {
-    window.location.href = "/api/auth/google";
+    const params = new URLSearchParams({
+      userType: "influencer",
+      next: "/dashboard",
+    });
+    window.location.href = `/api/auth/google?${params.toString()}`;
   };
 
   // Check if Google OAuth is configured (will be true once we set up the API endpoint)
@@ -115,7 +119,7 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, userType: "influencer" }),
       });
       return handleResponse(response, copy.emailAuth.toast.loginErrorTitle);
     },
@@ -138,7 +142,7 @@ export default function LoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, userType: "influencer" }),
       });
       return handleResponse(response, copy.emailAuth.toast.registerErrorTitle);
     },
@@ -178,7 +182,7 @@ export default function LoginPage() {
       return;
     }
 
-    const payload = { email: trimmedEmail, password };
+    const payload = { email: trimmedEmail, password, userType: "influencer" };
 
     if (isRegisterMode) {
       registerMutation.mutate(payload);
