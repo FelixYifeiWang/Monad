@@ -29,8 +29,6 @@ const translations = {
   en: {
     loading: "Loading...",
     header: {
-      title: "Business Settings",
-      subtitle: "Update your public brand information at any time.",
       back: "Dashboard",
     },
     toast: {
@@ -85,8 +83,6 @@ const translations = {
   zh: {
     loading: "加载中…",
     header: {
-      title: "品牌设置",
-      subtitle: "可随时更新品牌对外展示的信息。",
       back: "返回仪表盘",
     },
     toast: {
@@ -301,7 +297,6 @@ export default function BusinessSettingsPage() {
                 {copy.header.back}
               </Button>
             </Link>
-            <h1 className="text-3xl font-semibold tracking-tight">{copy.header.title}</h1>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>{user?.email}</span>
