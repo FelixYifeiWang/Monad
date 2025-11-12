@@ -11,14 +11,16 @@ import BusinessInquiry from "@/pages/business-inquiry";
 import BusinessChat from "@/pages/business-chat";
 import NotFound from "@/pages/not-found";
 import OnboardingPage from "@/pages/onboarding";
-import type { InfluencerPreferences } from "@shared/schema";
+import type { BusinessProfile, InfluencerPreferences } from "@shared/schema";
 import { getQueryFn } from "@/lib/queryClient";
 import { LanguageProvider } from "@/providers/language-provider";
 import BusinessHome from "@/pages/business-home";
 import BusinessDashboard from "@/pages/business-dashboard";
 import ChoosePortalPage from "@/pages/choose-portal";
+import BusinessOnboardingPage from "@/pages/business-onboarding";
 
 const preferencesQueryFn = getQueryFn<InfluencerPreferences | null>({ on401: "returnNull" });
+const businessProfileQueryFn = getQueryFn<BusinessProfile | null>({ on401: "returnNull" });
 
 function Router() {
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -35,7 +37,20 @@ function Router() {
     retry: 1,
   });
 
-  const showLoader = isLoading || (isInfluencer && isAuthenticated && preferencesLoading);
+  const { data: businessProfile, isLoading: businessProfileLoading } = useQuery<BusinessProfile | null>({
+    queryKey: ["/api/business/profile"],
+    queryFn: businessProfileQueryFn,
+    enabled: isAuthenticated && isBusiness,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1,
+  });
+
+  const showLoader =
+    isLoading ||
+    (isInfluencer && isAuthenticated && preferencesLoading) ||
+    (isBusiness && isAuthenticated && businessProfileLoading);
 
   if (showLoader) {
     return (
@@ -46,6 +61,7 @@ function Router() {
   }
 
   const requiresOnboarding = Boolean(isAuthenticated && isInfluencer && !preferences);
+  const requiresBusinessOnboarding = Boolean(isAuthenticated && isBusiness && !businessProfile);
 
   const renderInfluencer = (element: JSX.Element) => {
     if (!isAuthenticated || !isInfluencer) {
@@ -81,7 +97,14 @@ function Router() {
         }
       </Route>
 
-      <Route path="/business">{() => renderBusiness(<BusinessDashboard />)}</Route>
+      <Route path="/business/onboarding">{() => renderBusiness(<BusinessOnboardingPage />)}</Route>
+      <Route path="/business">
+        {() =>
+          renderBusiness(
+            requiresBusinessOnboarding ? <BusinessOnboardingPage /> : <BusinessDashboard />,
+          )
+        }
+      </Route>
 
       <Route path="/" component={ChoosePortalPage} />
       <Route component={NotFound} />

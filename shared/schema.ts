@@ -58,12 +58,22 @@ export const businessProfiles = pgTable("business_profiles", {
   contactName: varchar("contact_name"),
   contactPhone: varchar("contact_phone"),
   headquarters: text("headquarters"),
+  description: text("description"),
+  companySize: varchar("company_size"),
+  targetRegions: text("target_regions"),
+  budgetRange: varchar("budget_range"),
+  socialLinks: jsonb("social_links").default(sql`'{}'::jsonb`),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type InsertBusinessProfile = typeof businessProfiles.$inferInsert;
 export type BusinessProfile = typeof businessProfiles.$inferSelect;
+export const insertBusinessProfileSchema = createInsertSchema(businessProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
 
 // Influencer preferences/instructions
 export const influencerPreferences = pgTable("influencer_preferences", {

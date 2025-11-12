@@ -38,6 +38,7 @@ export interface IStorage {
   // Inquiries
   createInquiry(inquiry: InsertInquiry): Promise<Inquiry>;
   getInquiriesByInfluencer(influencerId: string): Promise<Inquiry[]>;
+  getInquiriesByBusiness(businessId: string): Promise<Inquiry[]>;
   getInquiry(id: string): Promise<Inquiry | undefined>;
   updateInquiryStatus(id: string, status: "pending" | "approved" | "rejected" | "needs_info", aiResponse?: string): Promise<Inquiry>;
   closeInquiryChat(id: string, aiRecommendation: string): Promise<Inquiry>;
@@ -179,6 +180,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(inquiries)
       .where(eq(inquiries.influencerId, influencerId))
+      .orderBy(desc(inquiries.createdAt));
+  }
+
+  async getInquiriesByBusiness(businessId: string): Promise<Inquiry[]> {
+    return await db
+      .select()
+      .from(inquiries)
+      .where(eq(inquiries.businessId, businessId))
       .orderBy(desc(inquiries.createdAt));
   }
 

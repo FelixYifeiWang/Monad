@@ -55,7 +55,19 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ message: fromError(validation.error).toString() });
     }
 
-    const inquiry = await storage.createInquiry(validation.data);
+    // Attempt to associate inquiry with authenticated business accounts
+    // @ts-ignore - added by initAuth
+    const sessionUser = req.user as { id: string; userType: string; email?: string } | undefined;
+    const isBusinessUser = sessionUser?.userType === 'business';
+
+    const inquiryPayload = {
+      ...validation.data,
+      businessId: isBusinessUser ? sessionUser.id : undefined,
+      businessEmail:
+        isBusinessUser && sessionUser?.email ? sessionUser.email : validation.data.businessEmail,
+    };
+
+    const inquiry = await storage.createInquiry(inquiryPayload);
 
     // Get influencer preferences and generate AI response
     let preferences = await storage.getInfluencerPreferences(validation.data.influencerId);
@@ -85,7 +97,7 @@ async function handlePost(req: VercelRequest, res: VercelResponse) {
 
     const aiResponse = await generateInquiryResponse(
       {
-        businessEmail: validation.data.businessEmail,
+        businessEmail: inquiryPayload.businessEmail,
         message: validation.data.message,
         price: validation.data.price,
         companyInfo: validation.data.companyInfo,
