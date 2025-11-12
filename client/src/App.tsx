@@ -16,6 +16,7 @@ import { getQueryFn } from "@/lib/queryClient";
 import { LanguageProvider } from "@/providers/language-provider";
 import BusinessHome from "@/pages/business-home";
 import BusinessDashboard from "@/pages/business-dashboard";
+import BusinessSettingsPage from "@/pages/business-settings";
 import ChoosePortalPage from "@/pages/choose-portal";
 import BusinessOnboardingPage from "@/pages/business-onboarding";
 import { isBusinessProfileComplete } from "@/lib/businessProfile";
@@ -100,6 +101,7 @@ function Router() {
       </Route>
 
       <Route path="/business/onboarding">{() => renderBusiness(<BusinessOnboardingPage />)}</Route>
+      <Route path="/business/settings">{() => renderBusiness(<BusinessSettingsPage />)}</Route>
       <Route path="/business">
         {() =>
           renderBusiness(

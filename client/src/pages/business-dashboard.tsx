@@ -163,7 +163,7 @@ export default function BusinessDashboard() {
             <h1 className="text-3xl font-semibold tracking-tight">{copy.title}</h1>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/business/onboarding">
+            <Link href="/business/settings">
               <Button variant="ghost" size="sm">
                 {copy.settings}
               </Button>
