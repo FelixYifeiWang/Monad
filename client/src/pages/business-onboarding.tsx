@@ -270,24 +270,50 @@ export default function BusinessOnboardingPage() {
     mutation.mutate();
   };
 
-  const renderCompanySizeOptions = () => (
-    <div className="flex w-full flex-wrap gap-3">
-      {copy.companySizeOptions.map((option) => (
-        <button
-          key={option}
-          type="button"
-          onClick={() => setCompanySize(option)}
-          className={`min-w-[72px] rounded-full border px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c4b5fd] ${
-            companySize === option
-              ? "border-[#b197fc] bg-white/90 text-[#573ccb]"
-              : "border-transparent bg-white/70 text-slate-600 hover:border-[#e2d6ff]"
-          }`}
-        >
-          {option}
-        </button>
-      ))}
-    </div>
-  );
+  const renderCompanySizeOptions = () => {
+    const options: string[] = [...copy.companySizeOptions];
+    const activeIndex = Math.max(0, options.indexOf(companySize));
+    const progressPercent =
+      options.length > 1 ? (activeIndex / (options.length - 1)) * 100 : 100;
+
+    return (
+      <div className="w-full space-y-3">
+        <div className="relative h-10">
+          <div className="absolute left-0 right-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-slate-200" />
+          <div
+            className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#8ec5ff] via-[#7b7aff] to-[#4f46e5]"
+            style={{ width: `${progressPercent}%` }}
+          />
+          {options.map((option, index) => {
+            const position = options.length === 1 ? 0 : (index / (options.length - 1)) * 100;
+            const isSelected = option === companySize;
+            return (
+              <button
+                key={option}
+                type="button"
+                onClick={() => setCompanySize(option)}
+                style={{ left: `${position}%` }}
+                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c4b5fd] ${
+                  isSelected ? "border-[#4f46e5] bg-white" : "border-slate-300 bg-white"
+                }`}
+              >
+                <span
+                  className={`block h-4 w-4 rounded-full ${
+                    isSelected ? "bg-[#4f46e5]" : "bg-slate-300"
+                  }`}
+                />
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex justify-between text-xs font-semibold text-slate-600">
+          {options.map((option) => (
+            <span key={option}>{option}</span>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const renderBudgetOptions = () => (
     <div className="grid w-full gap-3 md:grid-cols-2">
