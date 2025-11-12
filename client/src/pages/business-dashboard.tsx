@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useLanguage } from "@/providers/language-provider";
 import LanguageToggle from "@/components/language-toggle";
 import { Link } from "wouter";
+import { LogOut } from "lucide-react";
 
 function formatDate(value?: string | Date | null): string {
   if (!value) return "—";
@@ -86,6 +87,16 @@ export default function BusinessDashboard() {
   const socialLinks = parseSocialLinks(profile?.socialLinks);
   const profileCompleted = Boolean(profile?.description && profile?.budgetRange && profile?.targetRegions);
 
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } catch (error) {
+      console.error("Business logout failed:", error);
+    } finally {
+      window.location.href = "/business/login";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-white">
@@ -96,6 +107,10 @@ export default function BusinessDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <LanguageToggle />
+            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
             <Link href="/business/onboarding">
               <Button variant="outline">{copy.editProfile}</Button>
             </Link>
