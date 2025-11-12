@@ -1,113 +1,133 @@
-import { useEffect, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useLanguage } from "@/providers/language-provider";
+import type { BusinessProfile } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
-import LanguageToggle from "@/components/language-toggle";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
-import type { BusinessProfile } from "@shared/schema";
 
-const urlField = z
-  .string()
-  .url("Enter a valid URL (https://...)")
-  .or(z.literal(""))
-  .optional();
+const boardStyle: CSSProperties = {
+  backgroundImage: "url(/images/onboard_board.png)",
+  backgroundSize: "contain",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "center",
+  minHeight: "520px",
+};
 
-const socialLinksSchema = z.object({
-  instagram: urlField,
-  tiktok: urlField,
-  youtube: urlField,
-  linkedin: urlField,
-});
+const continueButtonStyle: CSSProperties = {
+  backgroundImage: "url(/images/onboard_button.png)",
+  backgroundSize: "contain",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "center",
+  width: "130px",
+  height: "48px",
+  border: "none",
+  cursor: "pointer",
+};
 
-const businessProfileFormSchema = z.object({
-  companyName: z.string().min(2, "Company name is required"),
-  industry: z.string().min(2, "Industry is required"),
-  companySize: z.string().min(1, "Select a company size"),
-  website: urlField,
-  headquarters: z.string().optional(),
-  contactName: z.string().min(2, "Primary contact is required"),
-  contactPhone: z.string().optional(),
-  targetRegions: z.string().min(2, "Let us know the markets you care about"),
-  budgetRange: z.string().min(1, "Add a typical budget range"),
-  description: z.string().min(30, "Share at least 30 characters about your brand"),
-  socialLinks: socialLinksSchema,
-});
+const translations = {
+  en: {
+    loading: "Loading…",
+    buttons: {
+      continue: "Continue",
+      saving: "Saving...",
+    },
+    errors: {
+      company: "Please share your company name, industry, and team size.",
+      reach: "Let creators know your target regions, budget range, and brand story (30+ chars).",
+      contact: "Add a main contact name so we know who to reach out to.",
+    },
+    steps: {
+      company: {
+        title: "Tell us about your brand",
+        description: "These basics help influencers recognize who you are.",
+        placeholders: {
+          company: "Acme Studios",
+          industry: "Beauty / Lifestyle / Tech...",
+          website: "https://www.example.com",
+        },
+        companySizeLabel: "Team size",
+      },
+      reach: {
+        title: "Share your targets & budget",
+        description: "Help our AI propose the right collaborations.",
+        regionsLabel: "Target markets / regions",
+        regionsPlaceholder: "e.g. US, Canada, Southeast Asia, Tier-1 China…",
+        storyLabel: "Brand story",
+        storyPlaceholder: "Introduce your positioning, hero products, or past collaborations.",
+        budgetLabel: "Typical budget range",
+      },
+      socials: {
+        title: "Contact & social presence",
+        description: "Let creators know who will follow up and where to find you.",
+        contactLabel: "Primary contact",
+        phoneLabel: "Phone / WhatsApp (optional)",
+        socialsLabel: "Social channels",
+      },
+    },
+    companySizeOptions: ["1-10", "11-50", "51-200", "201-500", "500+"],
+    budgetOptions: ["<$5k", "$5k-$20k", "$20k-$50k", "$50k+"],
+    socials: ["instagram", "tiktok", "youtube", "linkedin"],
+  },
+  zh: {
+    loading: "加载中…",
+    buttons: {
+      continue: "继续",
+      saving: "保存中…",
+    },
+    errors: {
+      company: "请填写公司名称、行业以及团队规模。",
+      reach: "请补充目标市场、预算范围以及品牌简介（至少 30 个字符）。",
+      contact: "请提供主要联系人姓名，方便后续沟通。",
+    },
+    steps: {
+      company: {
+        title: "介绍你的品牌",
+        description: "这些基础信息有助于创作者快速了解你。",
+        placeholders: {
+          company: "Acme Studios",
+          industry: "美妆 / 生活方式 / 科技…",
+          website: "https://www.example.com",
+        },
+        companySizeLabel: "团队规模",
+      },
+      reach: {
+        title: "分享目标与预算",
+        description: "帮助 AI 为你匹配合适的合作机会。",
+        regionsLabel: "目标地区 / 市场",
+        regionsPlaceholder: "例如：北美、东南亚、中国一线城市…",
+        storyLabel: "品牌介绍",
+        storyPlaceholder: "介绍品牌定位、主打产品、过往合作等。",
+        budgetLabel: "常规预算范围",
+      },
+      socials: {
+        title: "联系人与社媒",
+        description: "告诉创作者由谁负责后续沟通，以及品牌活跃的平台。",
+        contactLabel: "主要联系人",
+        phoneLabel: "电话 / 微信 / WhatsApp（可选）",
+        socialsLabel: "社交账号",
+      },
+    },
+    companySizeOptions: ["1-10", "11-50", "51-200", "201-500", "500+"],
+    budgetOptions: ["<¥3w", "¥3w-¥10w", "¥10w-¥35w", "¥35w+"],
+    socials: ["instagram", "tiktok", "youtube", "linkedin"],
+  },
+} as const;
 
-type BusinessProfileFormValues = z.infer<typeof businessProfileFormSchema>;
-
-const companySizeOptions = [
-  { value: "1-10", label: "1-10" },
-  { value: "11-50", label: "11-50" },
-  { value: "51-200", label: "51-200" },
-  { value: "201-500", label: "201-500" },
-  { value: "500+", label: "500+" },
-];
-
-const budgetOptions = [
-  { value: "<$5k", label: "< $5k per campaign" },
-  { value: "$5k-$20k", label: "$5k – $20k" },
-  { value: "$20k-$50k", label: "$20k – $50k" },
-  { value: "$50k+", label: "$50k+" },
-];
+const stepOrder = ["company", "reach", "socials"] as const;
+type StepKey = (typeof stepOrder)[number];
+type BusinessOnboardingCopy = (typeof translations)[keyof typeof translations];
 
 function parseSocialLinks(links: unknown) {
-  if (!links || typeof links !== "object") {
-    return {};
-  }
+  if (!links || typeof links !== "object") return {};
   return links as Record<string, string>;
 }
 
 export default function BusinessOnboardingPage() {
   const { language } = useLanguage();
+  const copy = useMemo<BusinessOnboardingCopy>(() => translations[language], [language]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
-
-  const copy = useMemo(
-    () =>
-      language === "zh"
-        ? {
-            title: "完善品牌资料",
-            subtitle: "创建品牌档案后即可开始提交合作请求。",
-            save: "保存资料",
-            saving: "保存中…",
-            profileCard: {
-              heading: "品牌信息",
-              description: "这些信息将帮助 AI 更好地理解你的品牌。",
-            },
-            storyLabel: "品牌简介",
-            storyPlaceholder: "介绍品牌定位、产品线、过往合作经验等…",
-            regionsLabel: "目标市场 / 地区",
-            budgetLabel: "常规预算范围",
-            socialLabel: "社交账号",
-            contactLabel: "主要联系人",
-          }
-        : {
-            title: "Complete your brand profile",
-            subtitle: "Share context so the AI agent can pitch you accurately.",
-            save: "Save profile",
-            saving: "Saving...",
-            profileCard: {
-              heading: "Brand details",
-              description: "Tell us who you are and what kind of campaigns you run.",
-            },
-            storyLabel: "Brand story",
-            storyPlaceholder: "Describe your positioning, product lines, and past collabs...",
-            regionsLabel: "Target markets / regions",
-            budgetLabel: "Typical budget range",
-            socialLabel: "Social channels",
-            contactLabel: "Main point of contact",
-          },
-    [language],
-  );
 
   const { data: profile, isLoading } = useQuery<BusinessProfile | null>({
     queryKey: ["/api/business/profile"],
@@ -119,59 +139,64 @@ export default function BusinessOnboardingPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const form = useForm<BusinessProfileFormValues>({
-    resolver: zodResolver(businessProfileFormSchema),
-    defaultValues: {
-      companyName: "",
-      industry: "",
-      companySize: "",
-      website: "",
-      headquarters: "",
-      contactName: "",
-      contactPhone: "",
-      targetRegions: "",
-      budgetRange: "",
-      description: "",
-      socialLinks: {
-        instagram: "",
-        tiktok: "",
-        youtube: "",
-        linkedin: "",
-      },
-    },
+  const [companyName, setCompanyName] = useState("");
+  const [industry, setIndustry] = useState("");
+  const [website, setWebsite] = useState("");
+  const [companySize, setCompanySize] = useState("");
+  const [headquarters, setHeadquarters] = useState("");
+  const [contactName, setContactName] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [targetRegions, setTargetRegions] = useState("");
+  const [budgetRange, setBudgetRange] = useState("");
+  const [description, setDescription] = useState("");
+  const [socialLinks, setSocialLinks] = useState<Record<string, string>>({
+    instagram: "",
+    tiktok: "",
+    youtube: "",
+    linkedin: "",
   });
+  const [stepIndex, setStepIndex] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (profile) {
-      const links = parseSocialLinks(profile.socialLinks);
-      form.reset({
-        companyName: profile.companyName ?? "",
-        industry: profile.industry ?? "",
-        companySize: profile.companySize ?? "",
-        website: profile.website ?? "",
-        headquarters: profile.headquarters ?? "",
-        contactName: profile.contactName ?? "",
-        contactPhone: profile.contactPhone ?? "",
-        targetRegions: profile.targetRegions ?? "",
-        budgetRange: profile.budgetRange ?? "",
-        description: profile.description ?? "",
-        socialLinks: {
-          instagram: links.instagram ?? "",
-          tiktok: links.tiktok ?? "",
-          youtube: links.youtube ?? "",
-          linkedin: links.linkedin ?? "",
-        },
-      });
-    }
-  }, [profile, form]);
+    if (!profile) return;
+    const links = parseSocialLinks(profile.socialLinks);
+    setCompanyName(profile.companyName ?? "");
+    setIndustry(profile.industry ?? "");
+    setWebsite(profile.website ?? "");
+    setCompanySize(profile.companySize ?? "");
+    setHeadquarters(profile.headquarters ?? "");
+    setContactName(profile.contactName ?? "");
+    setContactPhone(profile.contactPhone ?? "");
+    setTargetRegions(profile.targetRegions ?? "");
+    setBudgetRange(profile.budgetRange ?? "");
+    setDescription(profile.description ?? "");
+    setSocialLinks({
+      instagram: links.instagram ?? "",
+      tiktok: links.tiktok ?? "",
+      youtube: links.youtube ?? "",
+      linkedin: links.linkedin ?? "",
+    });
+  }, [profile]);
 
   const mutation = useMutation({
-    mutationFn: async (values: BusinessProfileFormValues) => {
+    mutationFn: async () => {
+      const filteredLinks = Object.fromEntries(
+        Object.entries(socialLinks).filter(([, value]) => value && value.trim().length > 0),
+      );
+
       const payload = {
-        ...values,
-        socialLinks: Object.fromEntries(
-          Object.entries(values.socialLinks || {}).filter(([, value]) => value && value.trim().length > 0),
-        ),
+        companyName: companyName.trim(),
+        industry: industry.trim(),
+        website: website.trim(),
+        companySize,
+        headquarters: headquarters.trim(),
+        contactName: contactName.trim(),
+        contactPhone: contactPhone.trim(),
+        targetRegions: targetRegions.trim(),
+        budgetRange,
+        description: description.trim(),
+        socialLinks: filteredLinks,
       };
 
       const res = await fetch("/api/business/profile", {
@@ -192,249 +217,274 @@ export default function BusinessOnboardingPage() {
       await queryClient.invalidateQueries({ queryKey: ["/api/business/profile"] });
       toast({
         title: "Profile saved",
-        description: "You can now start collaborating with influencers.",
+        description: "You’re ready to collaborate with creators.",
       });
       setLocation("/business");
     },
-    onError: (error: unknown) => {
+    onError: (err: unknown) => {
       toast({
         title: "Unable to save",
-        description: error instanceof Error ? error.message : "Please try again.",
+        description: err instanceof Error ? err.message : "Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (values: BusinessProfileFormValues) => {
-    mutation.mutate(values);
+  const validateStep = () => {
+    const currentStep = stepOrder[stepIndex];
+    switch (currentStep) {
+      case "company":
+        if (!companyName.trim() || !industry.trim() || !companySize) {
+          return copy.errors.company;
+        }
+        return null;
+      case "reach":
+        if (!targetRegions.trim() || !budgetRange || description.trim().length < 30) {
+          return copy.errors.reach;
+        }
+        return null;
+      case "socials":
+      default:
+        if (!contactName.trim()) {
+          return copy.errors.contact;
+        }
+        return null;
+    }
+  };
+
+  const handleContinue = () => {
+    setError(null);
+    const validationMessage = validateStep();
+    if (validationMessage) {
+      setError(validationMessage);
+      return;
+    }
+
+    if (stepIndex < stepOrder.length - 1) {
+      setStepIndex((prev) => prev + 1);
+      return;
+    }
+
+    mutation.mutate();
+  };
+
+  const renderCompanySizeOptions = () => (
+    <div className="grid w-full gap-3 md:grid-cols-3">
+      {copy.companySizeOptions.map((option) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => setCompanySize(option)}
+          className={`rounded-3xl border px-4 py-3 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c4b5fd] ${
+            companySize === option
+              ? "border-[#b197fc] bg-white/90 text-[#573ccb]"
+              : "border-transparent bg-white/70 text-slate-600 hover:border-[#e2d6ff]"
+          }`}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderBudgetOptions = () => (
+    <div className="grid w-full gap-3 md:grid-cols-2">
+      {copy.budgetOptions.map((option) => (
+        <button
+          key={option}
+          type="button"
+          onClick={() => setBudgetRange(option)}
+          className={`rounded-3xl border px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c4b5fd] ${
+            budgetRange === option
+              ? "border-[#b197fc] bg-white/90 text-[#573ccb]"
+              : "border-transparent bg-white/70 text-slate-600 hover:border-[#e2d6ff]"
+          }`}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  );
+
+  const renderStepContent = () => {
+    const currentStep = stepOrder[stepIndex];
+    if (currentStep === "company") {
+      const stepCopy = copy.steps.company;
+      return (
+        <div className="flex w-full flex-col items-center gap-6 text-center">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-[#573ccb] md:text-3xl">{stepCopy.title}</h2>
+            <p className="text-base text-slate-600">{stepCopy.description}</p>
+          </div>
+          <div className="w-full max-w-lg space-y-4 text-left">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[#573ccb]">Company</label>
+              <input
+                value={companyName}
+                onChange={(event) => setCompanyName(event.target.value)}
+                placeholder={stepCopy.placeholders.company}
+                className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[#573ccb]">Industry</label>
+              <input
+                value={industry}
+                onChange={(event) => setIndustry(event.target.value)}
+                placeholder={stepCopy.placeholders.industry}
+                className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[#573ccb]">Website</label>
+                <input
+                  value={website}
+                  onChange={(event) => setWebsite(event.target.value)}
+                  placeholder={stepCopy.placeholders.website}
+                  className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.companySizeLabel}</label>
+                {renderCompanySizeOptions()}
+              </div>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[#573ccb]">Headquarters</label>
+              <input
+                value={headquarters}
+                onChange={(event) => setHeadquarters(event.target.value)}
+                placeholder="City, Country"
+                className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentStep === "reach") {
+      const stepCopy = copy.steps.reach;
+      return (
+        <div className="flex w-full flex-col items-center gap-6 text-center">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-[#573ccb] md:text-3xl">{stepCopy.title}</h2>
+            <p className="text-base text-slate-600">{stepCopy.description}</p>
+          </div>
+          <div className="w-full max-w-lg space-y-5 text-left">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.regionsLabel}</label>
+              <textarea
+                value={targetRegions}
+                onChange={(event) => setTargetRegions(event.target.value)}
+                rows={2}
+                placeholder={stepCopy.regionsPlaceholder}
+                className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.budgetLabel}</label>
+              {renderBudgetOptions()}
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.storyLabel}</label>
+              <textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={3}
+                placeholder={stepCopy.storyPlaceholder}
+                className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+              />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const stepCopy = copy.steps.socials;
+    return (
+      <div className="flex w-full flex-col items-center gap-6 text-center">
+        <div className="space-y-2">
+          <h2 className="text-2xl font-semibold text-[#573ccb] md:text-3xl">{stepCopy.title}</h2>
+          <p className="text-base text-slate-600">{stepCopy.description}</p>
+        </div>
+        <div className="w-full max-w-lg space-y-5 text-left">
+          <div>
+            <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.contactLabel}</label>
+            <input
+              value={contactName}
+              onChange={(event) => setContactName(event.target.value)}
+              placeholder="e.g. Jane Doe"
+              className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.phoneLabel}</label>
+            <input
+              value={contactPhone}
+              onChange={(event) => setContactPhone(event.target.value)}
+              placeholder="+1 555 111 2233"
+              className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.socialsLabel}</label>
+            <div className="space-y-3">
+              {copy.socials.map((platform) => (
+                <div key={platform}>
+                  <label className="text-xs uppercase tracking-wide text-slate-500">{platform}</label>
+                  <input
+                    value={socialLinks[platform] ?? ""}
+                    onChange={(event) =>
+                      setSocialLinks((prev) => ({
+                        ...prev,
+                        [platform]: event.target.value,
+                      }))
+                    }
+                    placeholder={`https://www.${platform}.com/yourbrand`}
+                    className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-sm text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-muted-foreground">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-muted-foreground">{copy.loading}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div>
-            <p className="text-sm text-muted-foreground">{copy.subtitle}</p>
-            <h1 className="text-3xl font-semibold tracking-tight">{copy.title}</h1>
-          </div>
-          <LanguageToggle />
+    <div className="flex min-h-screen items-center justify-center bg-white px-4">
+      <div className="relative flex w-full max-w-4xl flex-col items-center px-6 py-14" style={boardStyle}>
+        <div className="flex w-full flex-1 flex-col items-center justify-center gap-10">
+          {renderStepContent()}
         </div>
-      </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-10">
-        <Card>
-          <CardHeader>
-            <CardTitle>{copy.profileCard.heading}</CardTitle>
-            <p className="text-sm text-muted-foreground">{copy.profileCard.description}</p>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="companyName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Acme Studios" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+        {error && <p className="mt-6 text-sm font-medium text-rose-500">{error}</p>}
 
-                  <FormField
-                    control={form.control}
-                    name="industry"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Industry</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Beauty / Tech / Lifestyle..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+        <button
+          onClick={handleContinue}
+          disabled={mutation.isPending}
+          data-testid="button-business-onboarding-next"
+          className="mt-6 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+          style={continueButtonStyle}
+        >
+          <span className="sr-only">
+            {mutation.isPending ? copy.buttons.saving : copy.buttons.continue}
+          </span>
+        </button>
 
-                  <FormField
-                    control={form.control}
-                    name="companySize"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company size</FormLabel>
-                        <FormControl>
-                          <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            {...field}
-                          >
-                            <option value="">Select team size...</option>
-                            {companySizeOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="website"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Website</FormLabel>
-                        <FormControl>
-                          <Input placeholder="https://www.example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="headquarters"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Headquarters</FormLabel>
-                        <FormControl>
-                          <Input placeholder="City, Country" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="contactName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{copy.contactLabel}</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Jane Doe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="contactPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone / WhatsApp</FormLabel>
-                        <FormControl>
-                          <Input placeholder="+1 555 111 2233" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="budgetRange"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{copy.budgetLabel}</FormLabel>
-                        <FormControl>
-                          <select
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            {...field}
-                          >
-                            <option value="">Select...</option>
-                            {budgetOptions.map((option) => (
-                              <option key={option.value} value={option.value}>
-                                {option.label}
-                              </option>
-                            ))}
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <FormField
-                  control={form.control}
-                  name="targetRegions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{copy.regionsLabel}</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="e.g. US, Canada, SEA, Tier-1 cities in China..."
-                          className="min-h-[80px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{copy.storyLabel}</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder={copy.storyPlaceholder}
-                          className="min-h-[140px]"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  {(["instagram", "tiktok", "youtube", "linkedin"] as const).map((platform) => (
-                    <FormField
-                      key={platform}
-                      control={form.control}
-                      name={`socialLinks.${platform}`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="capitalize">{platform}</FormLabel>
-                          <FormControl>
-                            <Input placeholder={`https://www.${platform}.com/...`} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ))}
-                </div>
-
-                <Button type="submit" disabled={mutation.isPending} className="w-full md:w-auto">
-                  {mutation.isPending ? copy.saving : copy.save}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-      </main>
+        <div className="h-10" />
+      </div>
     </div>
   );
 }

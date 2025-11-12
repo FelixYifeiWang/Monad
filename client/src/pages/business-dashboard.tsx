@@ -9,6 +9,8 @@ import { useLanguage } from "@/providers/language-provider";
 import LanguageToggle from "@/components/language-toggle";
 import { Link } from "wouter";
 import { LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { isBusinessProfileComplete } from "@/lib/businessProfile";
 
 function formatDate(value?: string | Date | null): string {
   if (!value) return "—";
@@ -28,6 +30,7 @@ function parseSocialLinks(links: unknown) {
 
 export default function BusinessDashboard() {
   const { language } = useLanguage();
+  const { user } = useAuth();
 
   const copy = useMemo(
     () =>
@@ -39,7 +42,7 @@ export default function BusinessDashboard() {
             inquiriesCard: "我的询问",
             emptyProfile: "尚未填写资料。",
             emptyInquiries: "还没有提交任何询问。",
-            editProfile: "编辑资料",
+            settings: "设置",
             startInquiry: "浏览创作者",
             completeProfile: "完善资料以提升匹配质量。",
           }
@@ -50,7 +53,7 @@ export default function BusinessDashboard() {
             inquiriesCard: "Your inquiries",
             emptyProfile: "Profile not completed yet.",
             emptyInquiries: "No inquiries submitted yet.",
-            editProfile: "Edit profile",
+            settings: "Settings",
             startInquiry: "Browse creators",
             completeProfile: "Complete your profile to boost matches.",
           },
@@ -85,7 +88,7 @@ export default function BusinessDashboard() {
   }
 
   const socialLinks = parseSocialLinks(profile?.socialLinks);
-  const profileCompleted = Boolean(profile?.description && profile?.budgetRange && profile?.targetRegions);
+  const profileCompleted = isBusinessProfileComplete(profile);
 
   const handleLogout = async () => {
     try {
@@ -106,14 +109,18 @@ export default function BusinessDashboard() {
             <h1 className="text-3xl font-semibold tracking-tight">{copy.title}</h1>
           </div>
           <div className="flex items-center gap-3">
-            <LanguageToggle />
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
             <Link href="/business/onboarding">
-              <Button variant="outline">{copy.editProfile}</Button>
+              <Button variant="ghost" size="sm">
+                {copy.settings}
+              </Button>
             </Link>
+            <div className="text-sm text-muted-foreground">{user?.email}</div>
+            <div className="flex items-center gap-2">
+              <LanguageToggle className="h-9" />
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -199,7 +206,7 @@ export default function BusinessDashboard() {
                 {!profileCompleted && (
                   <Link href="/business/onboarding">
                     <Button className="mt-4" size="sm">
-                      {copy.editProfile}
+                      {copy.settings}
                     </Button>
                   </Link>
                 )}

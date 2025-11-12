@@ -18,6 +18,7 @@ import BusinessHome from "@/pages/business-home";
 import BusinessDashboard from "@/pages/business-dashboard";
 import ChoosePortalPage from "@/pages/choose-portal";
 import BusinessOnboardingPage from "@/pages/business-onboarding";
+import { isBusinessProfileComplete } from "@/lib/businessProfile";
 
 const preferencesQueryFn = getQueryFn<InfluencerPreferences | null>({ on401: "returnNull" });
 const businessProfileQueryFn = getQueryFn<BusinessProfile | null>({ on401: "returnNull" });
@@ -47,6 +48,7 @@ function Router() {
     retry: 1,
   });
 
+  const businessProfileComplete = isBusinessProfileComplete(businessProfile);
   const showLoader =
     isLoading ||
     (isInfluencer && isAuthenticated && preferencesLoading) ||
@@ -61,7 +63,7 @@ function Router() {
   }
 
   const requiresOnboarding = Boolean(isAuthenticated && isInfluencer && !preferences);
-  const requiresBusinessOnboarding = Boolean(isAuthenticated && isBusiness && !businessProfile);
+  const requiresBusinessOnboarding = Boolean(isAuthenticated && isBusiness && !businessProfileComplete);
 
   const renderInfluencer = (element: JSX.Element) => {
     if (!isAuthenticated || !isInfluencer) {

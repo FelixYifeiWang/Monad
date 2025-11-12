@@ -126,10 +126,6 @@ export function configurePassport() {
             userType: resolvedUserType,
           });
 
-          if (resolvedUserType === 'business') {
-            await storage.upsertBusinessProfile({ userId: updatedUser.id });
-          }
-
           done(null, sanitizeUser(updatedUser));
         } catch (error) {
           console.error('❌ OAuth error:', error);

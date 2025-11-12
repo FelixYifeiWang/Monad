@@ -66,9 +66,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       userType: requestedUserType,
     });
 
-    if (requestedUserType === 'business') {
-      await storage.upsertBusinessProfile({ userId: newUser.id });
-    }
     userToReturn = sanitizeUser(newUser);
   }
 
