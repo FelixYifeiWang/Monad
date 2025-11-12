@@ -278,7 +278,7 @@ export default function BusinessOnboardingPage() {
 
     return (
       <div className="w-full space-y-2">
-        <div className="relative h-6">
+        <div className="relative mx-auto h-6 max-w-[320px]">
           <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200" />
           <div
             className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#8ec5ff] via-[#7b7aff] to-[#4f46e5]"
@@ -306,7 +306,7 @@ export default function BusinessOnboardingPage() {
             );
           })}
         </div>
-        <div className="flex justify-between text-xs font-semibold text-slate-600">
+        <div className="mx-auto flex max-w-[320px] justify-between text-xs font-semibold text-slate-600">
           {options.map((option) => (
             <span key={option}>{option}</span>
           ))}
@@ -323,7 +323,7 @@ export default function BusinessOnboardingPage() {
 
     return (
       <div className="w-full space-y-2">
-        <div className="relative h-6">
+        <div className="relative mx-auto h-6 max-w-[320px]">
           <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200" />
           <div
             className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#fbbf24] via-[#fb923c] to-[#f97316]"
@@ -351,7 +351,7 @@ export default function BusinessOnboardingPage() {
             );
           })}
         </div>
-        <div className="flex justify-between text-xs font-semibold text-slate-600">
+        <div className="mx-auto flex max-w-[320px] justify-between text-xs font-semibold text-slate-600">
           {options.map((option) => (
             <span key={option}>{option}</span>
           ))}
