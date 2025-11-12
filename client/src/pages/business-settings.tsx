@@ -22,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import type { BusinessProfile } from "@shared/schema";
 import { isBusinessProfileComplete } from "@/lib/businessProfile";
-import { useLocation } from "wouter";
+import { Link, useLocation } from "wouter";
 
 const translations = {
   en: {
@@ -30,6 +30,7 @@ const translations = {
     header: {
       title: "Business Settings",
       subtitle: "Update your public brand information at any time.",
+      back: "Dashboard",
     },
     toast: {
       saved: "Profile updated",
@@ -85,6 +86,7 @@ const translations = {
     header: {
       title: "品牌设置",
       subtitle: "可随时更新品牌对外展示的信息。",
+      back: "返回仪表盘",
     },
     toast: {
       saved: "资料已更新",
@@ -278,7 +280,14 @@ export default function BusinessSettingsPage() {
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <div>
-            <p className="text-sm text-muted-foreground">{copy.header.subtitle}</p>
+            <div className="flex items-center gap-3">
+              <Link href="/business">
+                <Button variant="ghost" size="sm">
+                  {copy.header.back}
+                </Button>
+              </Link>
+              <div className="text-sm text-muted-foreground">{copy.header.subtitle}</div>
+            </div>
             <h1 className="text-3xl font-semibold tracking-tight">{copy.header.title}</h1>
           </div>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
