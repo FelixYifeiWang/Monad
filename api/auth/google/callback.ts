@@ -46,7 +46,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const context = (req as any).session?.oauthLoginContext ?? {};
         const expectedUserType = parseUserType(context.userType);
         const next = sanitizeNext(context.next);
-        const destinationFromContext = next ?? (expectedUserType === 'business' ? '/business/dashboard' : '/');
+        const fallbackUserType = expectedUserType ?? user.userType;
+        const destinationFromContext =
+          next ??
+          (fallbackUserType === 'business' ? '/business/dashboard' : '/');
 
         const redirectTarget =
           expectedUserType && user.userType !== expectedUserType
