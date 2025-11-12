@@ -85,13 +85,16 @@ export function configurePassport() {
           const requestedUserType = parseUserType(sessionContext?.userType);
 
           const preferredLanguageFromCookie = parsePreferredLanguage(req.headers?.cookie);
-          const userById = await storage.getUser(profile.id);
-          const userByEmail =
-            requestedUserType
-              ? await storage.getUserByEmail(email, requestedUserType)
-              : await storage.getUserByEmail(email);
+          const userByEmail = requestedUserType
+            ? await storage.getUserByEmail(email, requestedUserType)
+            : await storage.getUserByEmail(email);
 
-          const existingUser = userByEmail ?? userById;
+          let fallbackUser: User | undefined;
+          if (!userByEmail && !requestedUserType) {
+            fallbackUser = await storage.getUser(profile.id);
+          }
+
+          const existingUser = userByEmail ?? fallbackUser;
           const existingLanguage = existingUser?.languagePreference === 'zh'
             ? 'zh'
             : existingUser?.languagePreference === 'en'
@@ -103,7 +106,13 @@ export function configurePassport() {
             requestedUserType ??
             'influencer';
 
-          const idToUse = existingUser?.id ?? profile.id;
+          const idToUse =
+            existingUser?.id ??
+            (resolvedUserType === 'business' || requestedUserType === 'business'
+              ? `${profile.id}:business`
+              : resolvedUserType === 'influencer' || requestedUserType === 'influencer'
+                ? `${profile.id}:influencer`
+                : profile.id);
 
           const updatedUser = await storage.upsertUser({
             id: idToUse,
