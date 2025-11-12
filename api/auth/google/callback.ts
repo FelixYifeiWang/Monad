@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const fallbackUserType = expectedUserType ?? user.userType;
         const destinationFromContext =
           next ??
-          (fallbackUserType === 'business' ? '/business/dashboard' : '/');
+          (fallbackUserType === 'business' ? '/business' : '/influencer');
 
         const redirectTarget =
           expectedUserType && user.userType !== expectedUserType

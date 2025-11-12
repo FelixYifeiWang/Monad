@@ -227,12 +227,12 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      setLocation("/login");
+      setLocation("/influencer/login");
       return;
     }
 
     if (!isLoading && !preferencesLoading && preferences) {
-      setLocation("/dashboard");
+      setLocation("/influencer");
     }
   }, [isAuthenticated, isLoading, preferences, preferencesLoading, setLocation]);
 
@@ -265,7 +265,7 @@ export default function OnboardingPage() {
     onSuccess: async (saved) => {
       await queryClient.invalidateQueries({ queryKey: ["/api/preferences"] });
       queryClient.setQueryData(["/api/preferences"], saved);
-      setLocation("/dashboard");
+      setLocation("/influencer");
     },
     onError: (err: unknown) => {
       const message =

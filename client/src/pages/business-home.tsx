@@ -97,7 +97,7 @@ export default function BusinessLoginPage() {
   const handleGoogleLogin = () => {
     const params = new URLSearchParams({
       userType: "business",
-      next: "/business/dashboard",
+      next: "/business",
     });
     window.location.href = `/api/auth/google?${params.toString()}`;
   };
@@ -121,7 +121,7 @@ export default function BusinessLoginPage() {
       return handleResponse(response, copy.emailAuth.toast.loginErrorTitle);
     },
     onSuccess: () => {
-      window.location.href = "/business/dashboard";
+      window.location.href = "/business";
     },
     onError: (error: unknown) => {
       const description = error instanceof Error ? error.message : undefined;
@@ -144,7 +144,7 @@ export default function BusinessLoginPage() {
       return handleResponse(response, copy.emailAuth.toast.registerErrorTitle);
     },
     onSuccess: () => {
-      window.location.href = "/business/dashboard";
+      window.location.href = "/business";
     },
     onError: (error: unknown) => {
       const description = error instanceof Error ? error.message : undefined;

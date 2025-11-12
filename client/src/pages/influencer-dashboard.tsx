@@ -408,7 +408,7 @@ export default function InfluencerDashboard() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/login";
+        window.location.href = "/influencer/login";
       }, 500);
       return;
     }
@@ -450,7 +450,7 @@ export default function InfluencerDashboard() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/login";
+          window.location.href = "/influencer/login";
         }, 500);
         return;
       }
@@ -488,7 +488,7 @@ export default function InfluencerDashboard() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/login";
+          window.location.href = "/influencer/login";
         }, 500);
         return;
       }
@@ -503,10 +503,10 @@ export default function InfluencerDashboard() {
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/login";
+      window.location.href = "/influencer/login";
     } catch (error) {
       console.error("Logout error:", error);
-      window.location.href = "/login";
+      window.location.href = "/influencer/login";
     }
   };
 

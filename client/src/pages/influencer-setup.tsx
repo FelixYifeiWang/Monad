@@ -248,7 +248,7 @@ export default function InfluencerSetup() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/login";
+        window.location.href = "/influencer/login";
       }, 500);
       return;
     }
@@ -321,7 +321,7 @@ export default function InfluencerSetup() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/login";
+          window.location.href = "/influencer/login";
         }, 500);
         return;
       }
@@ -361,7 +361,7 @@ export default function InfluencerSetup() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/login";
+          window.location.href = "/influencer/login";
         }, 500);
         return;
       }
@@ -376,10 +376,10 @@ export default function InfluencerSetup() {
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
-      window.location.href = "/login";
+      window.location.href = "/influencer/login";
     } catch (error) {
       console.error("Logout error:", error);
-      window.location.href = "/login";
+      window.location.href = "/influencer/login";
     }
   };
 
@@ -421,7 +421,7 @@ export default function InfluencerSetup() {
               <span className="text-primary">Peri.</span>
               <span className="text-foreground">ai</span>
             </div>
-            <Link href="/dashboard">
+            <Link href="/influencer">
               <Button variant="ghost" size="sm" className="gap-2" data-testid="button-back-to-dashboard">
                 <ArrowLeft className="h-4 w-4" />
                 {copy.header.back}

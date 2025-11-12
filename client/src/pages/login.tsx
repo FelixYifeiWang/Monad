@@ -31,7 +31,7 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     const params = new URLSearchParams({
       userType: "influencer",
-      next: "/dashboard",
+      next: "/influencer",
     });
     window.location.href = `/api/auth/google?${params.toString()}`;
   };
@@ -124,7 +124,7 @@ export default function LoginPage() {
       return handleResponse(response, copy.emailAuth.toast.loginErrorTitle);
     },
     onSuccess: () => {
-      window.location.href = "/";
+      window.location.href = "/influencer";
     },
     onError: (error: unknown) => {
       const description = error instanceof Error ? error.message : undefined;
@@ -147,7 +147,7 @@ export default function LoginPage() {
       return handleResponse(response, copy.emailAuth.toast.registerErrorTitle);
     },
     onSuccess: () => {
-      window.location.href = "/";
+      window.location.href = "/influencer";
     },
     onError: (error: unknown) => {
       const description = error instanceof Error ? error.message : undefined;

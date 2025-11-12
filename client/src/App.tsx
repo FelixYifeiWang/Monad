@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -16,22 +16,26 @@ import { getQueryFn } from "@/lib/queryClient";
 import { LanguageProvider } from "@/providers/language-provider";
 import BusinessHome from "@/pages/business-home";
 import BusinessDashboard from "@/pages/business-dashboard";
+import ChoosePortalPage from "@/pages/choose-portal";
 
 const preferencesQueryFn = getQueryFn<InfluencerPreferences | null>({ on401: "returnNull" });
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const isInfluencer = user?.userType === "influencer";
+  const isBusiness = user?.userType === "business";
+
   const { data: preferences, isLoading: preferencesLoading } = useQuery<InfluencerPreferences | null>({
     queryKey: ["/api/preferences"],
     queryFn: preferencesQueryFn,
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isInfluencer,
     staleTime: 5 * 60 * 1000, // 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 1,
   });
 
-  const showLoader = isLoading || (isAuthenticated && preferencesLoading);
+  const showLoader = isLoading || (isInfluencer && isAuthenticated && preferencesLoading);
 
   if (showLoader) {
     return (
@@ -41,31 +45,45 @@ function Router() {
     );
   }
 
-  const requiresOnboarding = Boolean(isAuthenticated && !preferences);
+  const requiresOnboarding = Boolean(isAuthenticated && isInfluencer && !preferences);
+
+  const renderInfluencer = (element: JSX.Element) => {
+    if (!isAuthenticated || !isInfluencer) {
+      return <Redirect to="/influencer/login" />;
+    }
+    return element;
+  };
+
+  const renderBusiness = (element: JSX.Element) => {
+    if (!isAuthenticated || !isBusiness) {
+      return <Redirect to="/business/login" />;
+    }
+    return element;
+  };
 
   return (
     <Switch>
       <Route path="/i/:username/chat/:inquiryId" component={BusinessChat} />
       <Route path="/i/:username" component={BusinessInquiry} />
-      <Route path="/business" component={BusinessHome} />
-      <Route path="/business/dashboard" component={BusinessDashboard} />
-      <Route path="/login" component={LoginPage} />
-      {isAuthenticated ? (
-        <>
-          <Route path="/dashboard" component={InfluencerDashboard} />
-          <Route path="/setup" component={InfluencerSetup} />
-          {requiresOnboarding ? (
-            <>
-              <Route path="/onboarding" component={OnboardingPage} />
-              <Route path="/" component={OnboardingPage} />
-            </>
-          ) : (
-            <Route path="/" component={InfluencerDashboard} />
-          )}
-        </>
-      ) : (
-        <Route path="/" component={LoginPage} />
-      )}
+      <Route path="/business/login" component={BusinessHome} />
+      <Route path="/influencer/login" component={LoginPage} />
+      <Route path="/login">{() => <Redirect to="/influencer/login" />}</Route>
+      <Route path="/business/dashboard">{() => <Redirect to="/business" />}</Route>
+      <Route path="/dashboard">{() => <Redirect to="/influencer" />}</Route>
+      <Route path="/setup">{() => <Redirect to="/influencer/setup" />}</Route>
+      <Route path="/onboarding">{() => <Redirect to="/influencer/onboarding" />}</Route>
+
+      <Route path="/influencer/setup">{() => renderInfluencer(<InfluencerSetup />)}</Route>
+      <Route path="/influencer/onboarding">{() => renderInfluencer(<OnboardingPage />)}</Route>
+      <Route path="/influencer">
+        {() =>
+          renderInfluencer(requiresOnboarding ? <OnboardingPage /> : <InfluencerDashboard />)
+        }
+      </Route>
+
+      <Route path="/business">{() => renderBusiness(<BusinessDashboard />)}</Route>
+
+      <Route path="/" component={ChoosePortalPage} />
       <Route component={NotFound} />
     </Switch>
   );
