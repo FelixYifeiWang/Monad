@@ -67,12 +67,11 @@ const translations = {
       socials: {
         title: "Social presence",
         description: "Share the channels where businesses can learn more about you.",
-        socialsLabel: "Social channels",
       },
     },
     companySizeOptions: ["1-5", "6-20", "21-50", "51-100", "100+"],
     budgetOptions: ["<$5k", "$5k-$20k", "$20k-$50k", "$50k+"],
-    socials: ["instagram", "tiktok", "youtube", "linkedin"],
+    socials: ["instagram", "tiktok", "twitter"],
   },
   zh: {
     loading: "加载中…",
@@ -112,12 +111,11 @@ const translations = {
       socials: {
         title: "社媒资料",
         description: "告诉创作者品牌活跃的平台，方便他们了解更多信息。",
-        socialsLabel: "社交账号",
       },
     },
     companySizeOptions: ["1-5", "6-20", "21-50", "51-100", "100+"],
     budgetOptions: ["<¥3w", "¥3w-¥10w", "¥10w-¥35w", "¥35w+"],
-    socials: ["instagram", "tiktok", "youtube", "linkedin"],
+    socials: ["instagram", "tiktok", "twitter"],
   },
 } as const;
 
@@ -469,26 +467,27 @@ export default function BusinessOnboardingPage() {
           <p className="text-base text-slate-600">{stepCopy.description}</p>
         </div>
         <div className="w-full max-w-lg space-y-5 text-left">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.socialsLabel}</label>
-            <div className="space-y-3">
-              {copy.socials.map((platform) => (
-                <div key={platform}>
-                  <label className="text-xs uppercase tracking-wide text-slate-500">{platform}</label>
-                  <input
-                    value={socialLinks[platform] ?? ""}
-                    onChange={(event) =>
-                      setSocialLinks((prev) => ({
-                        ...prev,
-                        [platform]: event.target.value,
-                      }))
-                    }
-                    placeholder={`https://www.${platform}.com/yourbrand`}
-                    className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-sm text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
-                  />
-                </div>
-              ))}
-            </div>
+          <div className="space-y-3">
+            {copy.socials.map((platform) => (
+              <div key={platform}>
+                <label className="text-xs uppercase tracking-wide text-slate-500">{platform}</label>
+                <input
+                  value={socialLinks[platform] ?? ""}
+                  onChange={(event) =>
+                    setSocialLinks((prev) => ({
+                      ...prev,
+                      [platform]: event.target.value,
+                    }))
+                  }
+                  placeholder={
+                    platform === "twitter"
+                      ? "https://twitter.com/yourbrand"
+                      : `https://www.${platform}.com/yourbrand`
+                  }
+                  className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-sm text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>
