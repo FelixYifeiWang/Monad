@@ -37,8 +37,8 @@ const translations = {
     },
     errors: {
       company: "Please share your company name, industry, and team size.",
-      reach: "Let creators know your target regions, budget range, and brand story (30+ chars).",
-      contact: "Add a main contact name so we know who to reach out to.",
+      reach: "Let creators know your target regions and budget range.",
+      story: "Tell us a bit more about your brand story (30+ characters).",
     },
     steps: {
       company: {
@@ -56,15 +56,17 @@ const translations = {
         description: "Help our AI propose the right collaborations.",
         regionsLabel: "Target markets / regions",
         regionsPlaceholder: "e.g. US, Canada, Southeast Asia, Tier-1 China…",
-        storyLabel: "Brand story",
-        storyPlaceholder: "Introduce your positioning, hero products, or past collaborations.",
         budgetLabel: "Typical budget range",
       },
+      story: {
+        title: "Tell your brand story",
+        description: "Introduce your positioning, hero products, or past collaborations.",
+        storyLabel: "Brand story",
+        storyPlaceholder: "Describe what makes your brand unique...",
+      },
       socials: {
-        title: "Contact & social presence",
-        description: "Let creators know who will follow up and where to find you.",
-        contactLabel: "Primary contact",
-        phoneLabel: "Phone / WhatsApp (optional)",
+        title: "Social presence",
+        description: "Share the channels where businesses can learn more about you.",
         socialsLabel: "Social channels",
       },
     },
@@ -80,8 +82,8 @@ const translations = {
     },
     errors: {
       company: "请填写公司名称、行业以及团队规模。",
-      reach: "请补充目标市场、预算范围以及品牌简介（至少 30 个字符）。",
-      contact: "请提供主要联系人姓名，方便后续沟通。",
+      reach: "请补充目标市场与预算范围。",
+      story: "请提供至少 30 个字符的品牌介绍。",
     },
     steps: {
       company: {
@@ -99,15 +101,17 @@ const translations = {
         description: "帮助 AI 为你匹配合适的合作机会。",
         regionsLabel: "目标地区 / 市场",
         regionsPlaceholder: "例如：北美、东南亚、中国一线城市…",
-        storyLabel: "品牌介绍",
-        storyPlaceholder: "介绍品牌定位、主打产品、过往合作等。",
         budgetLabel: "常规预算范围",
       },
+      story: {
+        title: "介绍品牌故事",
+        description: "分享品牌定位、主打产品或过往合作。",
+        storyLabel: "品牌介绍",
+        storyPlaceholder: "介绍品牌定位、产品线、合作风格等…",
+      },
       socials: {
-        title: "联系人与社媒",
-        description: "告诉创作者由谁负责后续沟通，以及品牌活跃的平台。",
-        contactLabel: "主要联系人",
-        phoneLabel: "电话 / 微信 / WhatsApp（可选）",
+        title: "社媒资料",
+        description: "告诉创作者品牌活跃的平台，方便他们了解更多信息。",
         socialsLabel: "社交账号",
       },
     },
@@ -117,7 +121,7 @@ const translations = {
   },
 } as const;
 
-const stepOrder = ["company", "reach", "socials"] as const;
+const stepOrder = ["company", "reach", "story", "socials"] as const;
 type StepKey = (typeof stepOrder)[number];
 type BusinessOnboardingCopy = (typeof translations)[keyof typeof translations];
 
@@ -235,8 +239,13 @@ export default function BusinessOnboardingPage() {
         }
         return null;
       case "reach":
-        if (!targetRegions.trim() || !budgetRange || description.trim().length < 30) {
+        if (!targetRegions.trim() || !budgetRange) {
           return copy.errors.reach;
+        }
+        return null;
+      case "story":
+        if (description.trim().length < 30) {
+          return copy.errors.story;
         }
         return null;
       case "socials":
@@ -423,12 +432,26 @@ export default function BusinessOnboardingPage() {
               <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.budgetLabel}</label>
               {renderBudgetOptions()}
             </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (currentStep === "story") {
+      const stepCopy = copy.steps.story;
+      return (
+        <div className="flex w-full flex-col items-center gap-6 text-center">
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold text-[#573ccb] md:text-3xl">{stepCopy.title}</h2>
+            <p className="text-base text-slate-600">{stepCopy.description}</p>
+          </div>
+          <div className="w-full max-w-lg space-y-5 text-left">
             <div>
               <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.storyLabel}</label>
               <textarea
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                rows={3}
+                rows={4}
                 placeholder={stepCopy.storyPlaceholder}
                 className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
               />
