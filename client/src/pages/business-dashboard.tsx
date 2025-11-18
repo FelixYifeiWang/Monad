@@ -27,7 +27,7 @@ export default function BusinessDashboard() {
         ? {
             loading: "加载中…",
             title: "品牌控制台",
-            subtitle: "与 AI 助理对话，并随时查看资料状态。",
+            subtitle: "",
             chat: {
               title: "品牌 AI 助理",
               description: "像 ChatGPT 一样与 AI 沟通，获取合作策略、邮件草稿或下一步建议。",
@@ -49,13 +49,12 @@ export default function BusinessDashboard() {
             labels: {
               company: "公司名称",
               industry: "行业",
-              targets: "目标地区",
             },
           }
         : {
             loading: "Loading...",
             title: "Business dashboard",
-            subtitle: "Chat with your AI copilot and keep status in view.",
+            subtitle: "",
             chat: {
               title: "AI Copilot",
               description: "A ChatGPT-style assistant for strategy, outreach drafts, and next steps.",
@@ -77,7 +76,6 @@ export default function BusinessDashboard() {
             labels: {
               company: "Company",
               industry: "Industry",
-              targets: "Target regions",
             },
           },
     [language],
@@ -155,7 +153,6 @@ export default function BusinessDashboard() {
       <header className="border-b bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <div>
-            <p className="text-sm text-muted-foreground">{copy.subtitle}</p>
             <h1 className="text-3xl font-semibold tracking-tight">{copy.title}</h1>
           </div>
           <div className="flex items-center gap-3">
@@ -265,8 +262,6 @@ export default function BusinessDashboard() {
                 <p className="font-medium">{profile?.companyName || "—"}</p>
                 <p className="text-muted-foreground">{copy.labels.industry}</p>
                 <p className="font-medium">{profile?.industry || "—"}</p>
-                <p className="text-muted-foreground">{copy.labels.targets}</p>
-                <p className="font-medium whitespace-pre-wrap">{profile?.targetRegions || "—"}</p>
               </div>
             </CardContent>
           </Card>

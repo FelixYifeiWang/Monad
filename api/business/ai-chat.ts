@@ -23,8 +23,6 @@ function buildSystemPrompt(language: SupportedLanguage, profile: Awaited<ReturnT
   const brandLines = [
     profile?.companyName ? `Brand: ${profile.companyName}` : null,
     profile?.industry ? `Industry: ${profile.industry}` : null,
-    profile?.budgetRange ? `Budget range: ${profile.budgetRange}` : null,
-    profile?.targetRegions ? `Target regions: ${profile.targetRegions}` : null,
     profile?.description ? `Brand story: ${profile.description}` : null,
   ]
     .filter(Boolean)

@@ -57,8 +57,6 @@ export const businessProfiles = pgTable("business_profiles", {
   industry: varchar("industry"),
   description: text("description"),
   companySize: varchar("company_size"),
-  targetRegions: text("target_regions"),
-  budgetRange: varchar("budget_range"),
   socialLinks: jsonb("social_links").default(sql`'{}'::jsonb`),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

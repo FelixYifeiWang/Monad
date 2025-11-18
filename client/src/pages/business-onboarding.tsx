@@ -37,7 +37,6 @@ const translations = {
     },
     errors: {
       company: "Please share your company name, industry, and team size.",
-      reach: "Let creators know your target regions and budget range.",
       story: "Tell us a bit more about your brand story (30+ characters).",
     },
     steps: {
@@ -56,13 +55,6 @@ const translations = {
         },
         companySizeLabel: "Team size",
       },
-      reach: {
-        title: "Share your targets & budget",
-        description: "Help our AI propose the right collaborations.",
-        regionsLabel: "Target markets / regions",
-        regionsPlaceholder: "e.g. US, Canada, Southeast Asia, Tier-1 China…",
-        budgetLabel: "Typical budget range",
-      },
       story: {
         title: "Tell your brand story",
         description: "Introduce your positioning, hero products, or past collaborations.",
@@ -75,7 +67,6 @@ const translations = {
       },
     },
     companySizeOptions: ["1-5", "6-20", "21-50", "51-100", "100+"],
-    budgetOptions: ["<$5k", "$5k-$20k", "$20k-$50k", "$50k+"],
     socials: ["instagram", "tiktok", "twitter"],
   },
   zh: {
@@ -86,7 +77,6 @@ const translations = {
     },
     errors: {
       company: "请填写公司名称、行业以及团队规模。",
-      reach: "请补充目标市场与预算范围。",
       story: "请提供至少 30 个字符的品牌介绍。",
     },
     steps: {
@@ -105,13 +95,6 @@ const translations = {
         },
         companySizeLabel: "团队规模",
       },
-      reach: {
-        title: "分享目标与预算",
-        description: "帮助 AI 为你匹配合适的合作机会。",
-        regionsLabel: "目标地区 / 市场",
-        regionsPlaceholder: "例如：北美、东南亚、中国一线城市…",
-        budgetLabel: "常规预算范围",
-      },
       story: {
         title: "介绍品牌故事",
         description: "分享品牌定位、主打产品或过往合作。",
@@ -124,12 +107,11 @@ const translations = {
       },
     },
     companySizeOptions: ["1-5", "6-20", "21-50", "51-100", "100+"],
-    budgetOptions: ["<¥3w", "¥3w-¥10w", "¥10w-¥35w", "¥35w+"],
     socials: ["instagram", "tiktok", "x/twitter"],
   },
 } as const;
 
-const stepOrder = ["company", "reach", "story", "socials"] as const;
+const stepOrder = ["company", "story", "socials"] as const;
 type StepKey = (typeof stepOrder)[number];
 type BusinessOnboardingCopy = (typeof translations)[keyof typeof translations];
 
@@ -160,8 +142,6 @@ export default function BusinessOnboardingPage() {
   const [industry, setIndustry] = useState("");
   const [website, setWebsite] = useState("");
   const [companySize, setCompanySize] = useState("");
-  const [targetRegions, setTargetRegions] = useState("");
-  const [budgetRange, setBudgetRange] = useState("");
   const [description, setDescription] = useState("");
   const [socialLinks, setSocialLinks] = useState<Record<string, string>>({
     instagram: "",
@@ -179,8 +159,6 @@ export default function BusinessOnboardingPage() {
     setIndustry(profile.industry ?? "");
     setWebsite(profile.website ?? "");
     setCompanySize(profile.companySize ?? "");
-    setTargetRegions(profile.targetRegions ?? "");
-    setBudgetRange(profile.budgetRange ?? "");
     setDescription(profile.description ?? "");
     setSocialLinks({
       instagram: links.instagram ?? "",
@@ -201,8 +179,6 @@ export default function BusinessOnboardingPage() {
         industry: industry.trim(),
         website: website.trim(),
         companySize,
-        targetRegions: targetRegions.trim(),
-        budgetRange,
         description: description.trim(),
         socialLinks: filteredLinks,
       };
@@ -244,11 +220,6 @@ export default function BusinessOnboardingPage() {
       case "company":
         if (!companyName.trim() || !industry.trim() || !companySize) {
           return copy.errors.company;
-        }
-        return null;
-      case "reach":
-        if (!targetRegions.trim() || !budgetRange) {
-          return copy.errors.reach;
         }
         return null;
       case "story":
@@ -323,51 +294,6 @@ export default function BusinessOnboardingPage() {
     );
   };
 
-  const renderBudgetOptions = () => {
-    const options: string[] = [...copy.budgetOptions];
-    const activeIndex = Math.max(0, options.indexOf(budgetRange));
-    const progressPercent =
-      options.length > 1 ? (activeIndex / (options.length - 1)) * 100 : 100;
-
-    return (
-      <div className="w-full space-y-2">
-        <div className="relative mx-auto h-6 max-w-[420px]">
-          <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-slate-200" />
-          <div
-            className="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-[#fbbf24] via-[#fb923c] to-[#f97316]"
-            style={{ width: `${progressPercent}%` }}
-          />
-          {options.map((option, index) => {
-            const position = options.length === 1 ? 0 : (index / (options.length - 1)) * 100;
-            const isSelected = option === budgetRange;
-            return (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setBudgetRange(option)}
-                style={{ left: `${position}%` }}
-                className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full border transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#fdba74] ${
-                  isSelected ? "border-[#f97316] bg-white shadow" : "border-slate-200 bg-white"
-                }`}
-              >
-                <span
-                  className={`block h-3 w-3 rounded-full ${
-                    isSelected ? "bg-[#f97316]" : "bg-slate-300"
-                  }`}
-                />
-              </button>
-            );
-          })}
-        </div>
-        <div className="mx-auto flex max-w-[420px] justify-between text-xs font-semibold text-slate-600">
-          {options.map((option) => (
-            <span key={option}>{option}</span>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   const renderStepContent = () => {
     const currentStep = stepOrder[stepIndex];
     if (currentStep === "company") {
@@ -417,34 +343,6 @@ export default function BusinessOnboardingPage() {
                 <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.companySizeLabel}</label>
                 {renderCompanySizeOptions()}
               </div>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
-    if (currentStep === "reach") {
-      const stepCopy = copy.steps.reach;
-      return (
-        <div className="flex w-full flex-col items-center gap-6 text-center">
-          <div className="space-y-2">
-            <h2 className="text-2xl font-semibold text-[#573ccb] md:text-3xl">{stepCopy.title}</h2>
-            <p className="text-base text-slate-600">{stepCopy.description}</p>
-          </div>
-          <div className="w-full max-w-lg space-y-5 text-left">
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.regionsLabel}</label>
-              <textarea
-                value={targetRegions}
-                onChange={(event) => setTargetRegions(event.target.value)}
-                rows={2}
-                placeholder={stepCopy.regionsPlaceholder}
-                className="w-full rounded-3xl border border-transparent bg-white/85 px-5 py-3 text-base text-slate-700 shadow focus:border-[#a855f7] focus:outline-none focus:ring-2 focus:ring-[#c4b5fd]"
-              />
-            </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-[#573ccb]">{stepCopy.budgetLabel}</label>
-              {renderBudgetOptions()}
             </div>
           </div>
         </div>

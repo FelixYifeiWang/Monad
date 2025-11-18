@@ -46,14 +46,6 @@ const translations = {
           companySize: "Team Size",
         },
       },
-      reach: {
-        title: "Targets & Budget",
-        description: "Regions you care about and typical budget range.",
-        labels: {
-          regions: "Target Markets / Regions",
-          budget: "Typical Budget Range",
-        },
-      },
       story: {
         title: "Brand Story",
         description: "Share positioning, hero products, or past collaborations.",
@@ -75,8 +67,6 @@ const translations = {
     },
     validation: {
       company: "Company name and industry are required",
-      regions: "Please share the regions you target",
-      budget: "Please select a budget range",
       story: "Please add at least 30 characters describing your brand",
     },
   },
@@ -100,14 +90,6 @@ const translations = {
           companySize: "团队规模",
         },
       },
-      reach: {
-        title: "目标与预算",
-        description: "你关注的市场以及常规预算范围。",
-        labels: {
-          regions: "目标市场 / 地区",
-          budget: "常规预算范围",
-        },
-      },
       story: {
         title: "品牌故事",
         description: "介绍品牌定位、主打产品或过往合作。",
@@ -129,8 +111,6 @@ const translations = {
     },
     validation: {
       company: "请填写公司名称与行业",
-      regions: "请填写目标市场或地区",
-      budget: "请选择预算区间",
       story: "品牌介绍至少 30 个字符",
     },
   },
@@ -143,8 +123,6 @@ const businessProfileSchema = z.object({
   industry: z.string().min(1),
   website: z.string().url().optional().or(z.literal("")),
   companySize: z.string().min(1),
-  targetRegions: z.string().min(1),
-  budgetRange: z.string().min(1),
   description: z.string().min(30),
   socialLinks: z.record(z.string()).optional(),
 });
@@ -182,8 +160,6 @@ export default function BusinessSettingsPage() {
       industry: "",
       website: "",
       companySize: "",
-      targetRegions: "",
-      budgetRange: "",
       description: "",
       socialLinks: {
         instagram: "",
@@ -201,8 +177,6 @@ export default function BusinessSettingsPage() {
         industry: profile.industry ?? "",
         website: profile.website ?? "",
         companySize: profile.companySize ?? "",
-        targetRegions: profile.targetRegions ?? "",
-        budgetRange: profile.budgetRange ?? "",
         description: profile.description ?? "",
         socialLinks: {
           instagram: links["instagram"] ?? "",
@@ -252,8 +226,6 @@ export default function BusinessSettingsPage() {
       const firstError = validation.error.issues[0]?.path[0];
       if (firstError === "companyName" || firstError === "industry" || firstError === "companySize") {
         toast({ title: copy.validation.company, variant: "destructive" });
-      } else if (firstError === "targetRegions" || firstError === "budgetRange") {
-        toast({ title: copy.validation.regions, variant: "destructive" });
       } else if (firstError === "description") {
         toast({ title: copy.validation.story, variant: "destructive" });
       } else {
@@ -368,41 +340,6 @@ export default function BusinessSettingsPage() {
                       <FormLabel>{copy.cards.brand.labels.companySize}</FormLabel>
                       <FormControl>
                         <Input placeholder="1-5 / 6-20 / ..." {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{copy.cards.reach.title}</CardTitle>
-                <CardDescription>{copy.cards.reach.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="targetRegions"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{copy.cards.reach.labels.regions}</FormLabel>
-                      <FormControl>
-                        <Textarea rows={2} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="budgetRange"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{copy.cards.reach.labels.budget}</FormLabel>
-                      <FormControl>
-                        <Input placeholder="<$5k / $5k-$20k / ..." {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
