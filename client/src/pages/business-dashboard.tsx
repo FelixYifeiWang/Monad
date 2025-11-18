@@ -147,8 +147,8 @@ export default function BusinessDashboard() {
 
   return (
     <div className="min-h-screen bg-background overflow-hidden">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+      <header className="border-b border-muted-foreground/10 bg-white/80 backdrop-blur shadow-sm">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">{copy.title}</h1>
           </div>
