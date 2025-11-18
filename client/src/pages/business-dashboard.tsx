@@ -30,7 +30,6 @@ export default function BusinessDashboard() {
             subtitle: "",
             chat: {
               title: "品牌 AI 助理",
-              description: "像 ChatGPT 一样与 AI 沟通，获取合作策略、邮件草稿或下一步建议。",
               placeholder: "问问 AI：帮我写一封跟进邮件 / 如何提升转化率？",
               send: "发送",
               sending: "发送中…",
@@ -57,7 +56,6 @@ export default function BusinessDashboard() {
             subtitle: "",
             chat: {
               title: "AI Copilot",
-              description: "A ChatGPT-style assistant for strategy, outreach drafts, and next steps.",
               placeholder: "Ask the AI: draft a follow-up email / how to improve conversions?",
               send: "Send",
               sending: "Sending...",
@@ -71,7 +69,6 @@ export default function BusinessDashboard() {
             statusCard: {
               title: "Status",
               ready: "You're ready to collaborate",
-              reminder: "Keep your profile updated so influencers know how to work with you.",
             },
             labels: {
               company: "Company",
@@ -172,22 +169,19 @@ export default function BusinessDashboard() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 pb-8">
-        <div className="grid gap-6 lg:grid-cols-[2fr,1fr] h-[calc(100vh-140px)]">
-          <Card className="h-full overflow-hidden flex flex-col">
-            <CardHeader className="pb-3">
+      <main className="mx-auto max-w-7xl px-6 pb-10">
+        <div className="grid gap-6 lg:grid-cols-[3fr,2fr] h-[calc(100vh-140px)] w-full">
+          <Card className="h-full overflow-hidden flex flex-col border border-muted-foreground/20 shadow-sm">
+            <CardHeader className="pb-2">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
                   <Sparkles className="h-5 w-5 text-primary" />
                 </span>
-                <div>
-                  <CardTitle>{copy.chat.title}</CardTitle>
-                  <CardDescription>{copy.chat.description}</CardDescription>
-                </div>
+                <CardTitle>{copy.chat.title}</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
-              <div className="rounded-lg border bg-muted/40 p-4 flex-1 overflow-y-auto space-y-4">
+              <div className="rounded-xl border border-muted-foreground/20 bg-white/80 backdrop-blur p-4 flex-1 overflow-y-auto space-y-4">
                 {messages.map((message) => (
                   <div
                     key={message.id}
@@ -196,7 +190,7 @@ export default function BusinessDashboard() {
                     <div
                       className={`max-w-[80%] rounded-xl px-4 py-2 text-sm shadow-sm whitespace-pre-wrap ${
                         message.role === "assistant"
-                          ? "bg-white text-foreground border"
+                          ? "bg-white text-foreground border border-muted-foreground/30"
                           : "bg-primary text-primary-foreground"
                       }`}
                     >
@@ -209,7 +203,6 @@ export default function BusinessDashboard() {
                 )}
                 <div ref={scrollRef} />
               </div>
-              <p className="text-xs text-muted-foreground">{copy.chat.tip}</p>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -226,7 +219,7 @@ export default function BusinessDashboard() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={copy.chat.placeholder}
-                  className="min-h-[96px] resize-none"
+                  className="min-h-[96px] resize-none bg-white/80 backdrop-blur"
                   disabled={chatMutation.isPending}
                 />
                 <div className="flex justify-end">
@@ -239,29 +232,22 @@ export default function BusinessDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="h-full overflow-hidden">
-            <CardHeader>
+          <Card className="h-full overflow-hidden border border-muted-foreground/20 shadow-sm">
+            <CardHeader className="pb-2">
               <CardTitle>{copy.statusCard.title}</CardTitle>
-              <CardDescription>{copy.statusCard.reminder}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 overflow-y-auto h-full">
-              <div className="rounded-lg border border-dashed border-muted-foreground/40 p-4 space-y-2">
-                <p className="font-medium">
+              <div className="rounded-xl border border-muted-foreground/20 bg-white/80 backdrop-blur p-4 space-y-3">
+                <p className="text-lg font-semibold">
                   {profileCompleted ? copy.statusCard.ready : copy.completeProfile}
                 </p>
                 {!profileCompleted && (
                   <Link href="/business/onboarding">
-                    <Button className="mt-2" size="sm">
+                    <Button className="mt-1" size="sm" variant="outline">
                       {copy.settings}
                     </Button>
                   </Link>
                 )}
-              </div>
-              <div className="space-y-2 text-sm">
-                <p className="text-muted-foreground">{copy.labels.company}</p>
-                <p className="font-medium">{profile?.companyName || "—"}</p>
-                <p className="text-muted-foreground">{copy.labels.industry}</p>
-                <p className="font-medium">{profile?.industry || "—"}</p>
               </div>
             </CardContent>
           </Card>
